@@ -1,6 +1,13 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+public enum FootballPlayerControlSource
+{
+    WasdKeyboard,
+    ArrowKeyboard,
+    Gamepad
+}
+
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
 public sealed class FootballPlayerController : MonoBehaviour
@@ -35,6 +42,9 @@ public sealed class FootballPlayerController : MonoBehaviour
     private float _coyoteTimer;
     private float _jumpBufferTimer;
 
+    private FootballPlayerControlSource _controlSource = FootballPlayerControlSource.Gamepad;
+    private InputDevice _controlDevice;
+
     private bool _isGrounded;
     private bool _isJumping;
     private Vector3 _groundNormal = Vector3.up;
@@ -46,17 +56,46 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void Awake()
     {
-        _rigidbody = GetComponent<Rigidbody>();
-        _collider = GetComponent<CapsuleCollider>();
-        _input = new FootballInput();
+        ResolveReferences();
+        EnsureInput();
+
         _defaultColliderCenter = _collider.center;
         _defaultColliderHeight = _collider.height;
 
         ConfigureRigidbody();
     }
 
+    public void AssignInput(FootballPlayerControlSource source, InputDevice device = null)
+    {
+        EnsureInput();
+
+        _controlSource = source;
+        _controlDevice = device;
+        _moveInput = Vector2.zero;
+        _jumpBufferTimer = 0f;
+
+        ApplyInputRestrictions();
+    }
+
+    private void ResolveReferences()
+    {
+        _rigidbody = GetComponent<Rigidbody>();
+        _collider = GetComponent<CapsuleCollider>();
+    }
+
+    private void EnsureInput()
+    {
+        if (_input != null)
+            return;
+
+        _input = new FootballInput();
+        ApplyInputRestrictions();
+    }
+
     private void OnEnable()
     {
+        EnsureInput();
+
         _input.Player.Move.performed += OnMove;
         _input.Player.Move.canceled += OnMove;
         _input.Player.Jump.performed += OnJump;
@@ -66,17 +105,44 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_input == null)
+            return;
+
         _input.Player.Move.performed -= OnMove;
         _input.Player.Move.canceled -= OnMove;
         _input.Player.Jump.performed -= OnJump;
 
         _input.Player.Disable();
+        _moveInput = Vector2.zero;
     }
 
     private void OnDestroy()
     {
+        _input?.Dispose();
+
         if (_movementMaterial != null)
             Destroy(_movementMaterial);
+    }
+
+    private void ApplyInputRestrictions()
+    {
+        bool wasEnabled = _input.Player.enabled;
+
+        if (wasEnabled)
+            _input.Player.Disable();
+
+        _input.devices = _controlDevice != null ? new[] { _controlDevice } : null;
+
+        _input.bindingMask = _controlSource switch
+        {
+            FootballPlayerControlSource.WasdKeyboard => InputBinding.MaskByGroup("WASD"),
+            FootballPlayerControlSource.ArrowKeyboard => InputBinding.MaskByGroup("Arrows"),
+            FootballPlayerControlSource.Gamepad => InputBinding.MaskByGroup("Gamepad"),
+            _ => null
+        };
+
+        if (wasEnabled)
+            _input.Player.Enable();
     }
 
     private void FixedUpdate()
