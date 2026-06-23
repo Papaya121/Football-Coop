@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -6,36 +7,32 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(-100)]
 public sealed class FootballPlayerJoinManager : MonoBehaviour
 {
+    private const int PlayerCapacity = 2;
     private const float GamepadStickJoinThreshold = 0.5f;
 
-    private readonly FootballPlayerController[] _players = new FootballPlayerController[2];
-    private readonly FootballPlayerControlSource[] _assignedSources = new FootballPlayerControlSource[2];
-    private readonly InputDevice[] _assignedDevices = new InputDevice[2];
+    [SerializeField] private FootballPlayerController[] _players = new FootballPlayerController[PlayerCapacity];
+
+    private readonly FootballPlayerControlSource[] _assignedSources = new FootballPlayerControlSource[PlayerCapacity];
+    private readonly InputDevice[] _assignedDevices = new InputDevice[PlayerCapacity];
 
     private InputAction _restartAction;
     private int _assignedPlayerCount;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Bootstrap()
-    {
-        if (FindAnyObjectByType<FootballPlayerJoinManager>() != null)
-            return;
+    public event Action<int> PlayerCountChanged;
 
-        new GameObject(nameof(FootballPlayerJoinManager)).AddComponent<FootballPlayerJoinManager>();
-    }
+    public int AssignedPlayerCount => _assignedPlayerCount;
+    public int RequiredPlayerCount => _players.Length;
+    public bool HasRequiredPlayers => _assignedPlayerCount >= RequiredPlayerCount;
 
     private void Awake()
     {
         _restartAction = new InputAction("Restart", InputActionType.Button, "<Keyboard>/r");
         _restartAction.performed += OnRestart;
 
-        _players[0] = FindScenePlayer("Player_L");
-        _players[1] = FindScenePlayer("Player_R");
-
         for (int i = 0; i < _players.Length; i++)
         {
             if (_players[i] == null)
-                Debug.LogWarning($"Missing player slot {i + 1}. Expected Player_L and Player_R in the scene.", this);
+                Debug.LogWarning($"Missing player slot {i + 1} in {nameof(FootballPlayerJoinManager)}.", this);
             else
                 HidePlayer(_players[i]);
         }
@@ -70,18 +67,10 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
         TryJoinGamepads();
     }
 
-    private static FootballPlayerController FindScenePlayer(string playerName)
+    private void OnValidate()
     {
-        foreach (FootballPlayerController player in Resources.FindObjectsOfTypeAll<FootballPlayerController>())
-        {
-            if (!player.gameObject.scene.IsValid())
-                continue;
-
-            if (player.gameObject.name == playerName)
-                return player;
-        }
-
-        return null;
+        if (_players == null || _players.Length != PlayerCapacity)
+            Array.Resize(ref _players, PlayerCapacity);
     }
 
     private static void HidePlayer(FootballPlayerController player)
@@ -132,6 +121,7 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
         player.enabled = true;
         player.AssignInput(source, device);
         player.gameObject.SetActive(true);
+        PlayerCountChanged?.Invoke(_assignedPlayerCount);
 
         return true;
     }

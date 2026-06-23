@@ -60,14 +60,19 @@ public sealed class FootballBall : MonoBehaviour
 
     public void Respawn(Vector3 position)
     {
+        Respawn(position, Quaternion.identity);
+    }
+
+    public void Respawn(Vector3 position, Quaternion rotation)
+    {
         ResolveReferences();
 
         _passiveContactSuppressedUntil = 0f;
         _rigidbody.linearVelocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;
         _rigidbody.position = ToGameplayPlane(position);
-        _rigidbody.rotation = Quaternion.identity;
-        transform.SetPositionAndRotation(ToGameplayPlane(position), Quaternion.identity);
+        _rigidbody.rotation = rotation;
+        transform.SetPositionAndRotation(ToGameplayPlane(position), rotation);
     }
 
     public Vector3 GetClosestInteractionPoint(Vector3 origin)

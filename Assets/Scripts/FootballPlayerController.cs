@@ -38,6 +38,8 @@ public sealed class FootballPlayerController : MonoBehaviour
     private PhysicsMaterial _movementMaterial;
     private Vector3 _defaultColliderCenter;
     private float _defaultColliderHeight;
+    private Vector3 _initialVisualScale;
+    private bool _hasInitialVisualScale;
 
     private Vector2 _moveInput;
 
@@ -70,7 +72,11 @@ public sealed class FootballPlayerController : MonoBehaviour
         EnsureInput();
 
         if (_visualRoot)
+        {
+            _initialVisualScale = _visualRoot.localScale;
+            _hasInitialVisualScale = true;
             _facingDirection = (int)_visualRoot.localScale.x;
+        }
 
         _defaultColliderCenter = _collider.center;
         _defaultColliderHeight = _collider.height;
@@ -90,6 +96,35 @@ public sealed class FootballPlayerController : MonoBehaviour
 
         ApplyInputRestrictions();
         InputAssigned?.Invoke(_controlSource, _controlDevice);
+    }
+
+    public void Respawn(Vector3 position, Quaternion rotation)
+    {
+        ResolveReferences();
+
+        _moveInput = Vector2.zero;
+        _coyoteTimer = 0f;
+        _jumpBufferTimer = 0f;
+        _remainingAirJumps = _airJumpCount;
+        _isGrounded = false;
+        _isJumping = false;
+        _groundNormal = Vector3.up;
+
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+        _rigidbody.position = ToGameplayPlane(position);
+        _rigidbody.rotation = rotation;
+
+        transform.SetPositionAndRotation(ToGameplayPlane(position), rotation);
+
+        _collider.center = _defaultColliderCenter;
+        _collider.height = _defaultColliderHeight;
+
+        if (_visualRoot == null || !_hasInitialVisualScale)
+            return;
+
+        _visualRoot.localScale = _initialVisualScale;
+        _facingDirection = _initialVisualScale.x >= 0f ? 1 : -1;
     }
 
     private void ResolveReferences()
@@ -384,5 +419,11 @@ public sealed class FootballPlayerController : MonoBehaviour
         Vector3 scale = _visualRoot.localScale;
         scale.x = Mathf.Abs(scale.x) * _facingDirection;
         _visualRoot.localScale = scale;
+    }
+
+    private static Vector3 ToGameplayPlane(Vector3 value)
+    {
+        value.z = 0f;
+        return value;
     }
 }
