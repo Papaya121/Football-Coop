@@ -164,6 +164,8 @@ GameObject:
   - component: {fileID: 5410507424092468467}
   - component: {fileID: 2084694609873290611}
   - component: {fileID: 3640279843597481780}
+  - component: {fileID: 2945862890834177021}
+  - component: {fileID: 1558795706334385184}
   m_Layer: 6
   m_Name: Ball
   m_TagString: Untagged
@@ -295,6 +297,37 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 56
   m_CollisionDetection: 2
+--- !u!114 &2945862890834177021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9081017334737160680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 579b9ca954f5456790fda36d396fa244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBall
+  _maxLinearSpeed: 28
+  _maxAngularSpeed: 45
+  _lockToGameplayPlane: 1
+--- !u!114 &1558795706334385184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9081017334737160680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55888cc25d384dfc94c97f735f5b6f9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallRespawnInput
+  _ball: {fileID: 2945862890834177021}
+  _respawnPosition: {x: 0, y: 4, z: 0}
+  _respawnKey: 34
+  _clearTrails: 1
 --- !u!1 &9093265011085510193
 GameObject:
   m_ObjectHideFlags: 0

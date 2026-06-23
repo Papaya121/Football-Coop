@@ -120,19 +120,10 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Interact"",
-                    ""type"": ""Button"",
-                    ""id"": ""852140f2-7766-474d-8707-702459ba45f3"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": ""Hold"",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""Crouch"",
                     ""type"": ""Button"",
                     ""id"": ""27c5f898-bc57-4ee1-8800-db469aca5fe3"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -540,28 +531,6 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""1c04ea5f-b012-41d1-a6f7-02e963b52893"",
-                    ""path"": ""<Keyboard>/e"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard&Mouse"",
-                    ""action"": ""Interact"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b3f66d0b-7751-423f-908b-a11c5bd95930"",
-                    ""path"": ""<Gamepad>/buttonNorth"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""Interact"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""4f4649ac-64a8-4a73-af11-b3faef356a4d"",
                     ""path"": ""<Gamepad>/buttonEast"",
                     ""interactions"": """",
@@ -676,6 +645,15 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
                     ""expectedControlType"": ""Quaternion"",
                     ""processors"": """",
                     ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Interact"",
+                    ""type"": ""Button"",
+                    ""id"": ""02324d12-3a46-4e80-8de4-196569b43893"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": ""Hold"",
                     ""initialStateCheck"": false
                 }
             ],
@@ -1097,6 +1075,120 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
                     ""action"": ""TrackedDeviceOrientation"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""275c6c1a-9b34-4b8b-8c41-b7d78311fee1"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""919b48fb-0c27-406d-b626-6872af079ca1"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Ball"",
+            ""id"": ""3b2f4568-6625-4f67-9cb7-d37b477459dd"",
+            ""actions"": [
+                {
+                    ""name"": ""Kick"",
+                    ""type"": ""Button"",
+                    ""id"": ""d3e01ab5-b213-4dd2-9708-6a05dc4b3224"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Header"",
+                    ""type"": ""Button"",
+                    ""id"": ""1440ffc8-e493-48b9-a0eb-8ce2fb02bdd1"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""87bef1c0-7140-4828-8d79-9b35c0a3a1f1"",
+                    ""path"": ""<Keyboard>/k"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";WASD"",
+                    ""action"": ""Kick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""88254465-4ea4-43dd-9ac1-40ad74df2b66"",
+                    ""path"": ""<Keyboard>/leftBracket"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Arrows"",
+                    ""action"": ""Kick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""153fed9d-2b7d-4fb5-81d1-87a78f84347a"",
+                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Gamepad"",
+                    ""action"": ""Kick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5d498656-b622-4482-bebb-6c6a5af43f29"",
+                    ""path"": ""<Keyboard>/j"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";WASD"",
+                    ""action"": ""Header"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9eca45a4-904a-47eb-bcf2-85c067ed90ab"",
+                    ""path"": ""<Keyboard>/rightBracket"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Arrows"",
+                    ""action"": ""Header"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""beae4f68-92e7-4fb6-a4d2-f199e61bb8a4"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Gamepad"",
+                    ""action"": ""Header"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -1191,7 +1283,6 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
         m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
-        m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
         m_Player_Crouch = m_Player.FindAction("Crouch", throwIfNotFound: true);
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Previous = m_Player.FindAction("Previous", throwIfNotFound: true);
@@ -1209,12 +1300,18 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
         m_UI_ScrollWheel = m_UI.FindAction("ScrollWheel", throwIfNotFound: true);
         m_UI_TrackedDevicePosition = m_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
+        m_UI_Interact = m_UI.FindAction("Interact", throwIfNotFound: true);
+        // Ball
+        m_Ball = asset.FindActionMap("Ball", throwIfNotFound: true);
+        m_Ball_Kick = m_Ball.FindAction("Kick", throwIfNotFound: true);
+        m_Ball_Header = m_Ball.FindAction("Header", throwIfNotFound: true);
     }
 
     ~@FootballInput()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, FootballInput.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, FootballInput.UI.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Ball.enabled, "This will cause a leak and performance issues, FootballInput.Ball.Disable() has not been called.");
     }
 
     /// <summary>
@@ -1293,7 +1390,6 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Move;
     private readonly InputAction m_Player_Look;
     private readonly InputAction m_Player_Attack;
-    private readonly InputAction m_Player_Interact;
     private readonly InputAction m_Player_Crouch;
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_Previous;
@@ -1322,10 +1418,6 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Attack".
         /// </summary>
         public InputAction @Attack => m_Wrapper.m_Player_Attack;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Interact".
-        /// </summary>
-        public InputAction @Interact => m_Wrapper.m_Player_Interact;
         /// <summary>
         /// Provides access to the underlying input action "Player/Crouch".
         /// </summary>
@@ -1381,9 +1473,6 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
             @Attack.started += instance.OnAttack;
             @Attack.performed += instance.OnAttack;
             @Attack.canceled += instance.OnAttack;
-            @Interact.started += instance.OnInteract;
-            @Interact.performed += instance.OnInteract;
-            @Interact.canceled += instance.OnInteract;
             @Crouch.started += instance.OnCrouch;
             @Crouch.performed += instance.OnCrouch;
             @Crouch.canceled += instance.OnCrouch;
@@ -1419,9 +1508,6 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
             @Attack.started -= instance.OnAttack;
             @Attack.performed -= instance.OnAttack;
             @Attack.canceled -= instance.OnAttack;
-            @Interact.started -= instance.OnInteract;
-            @Interact.performed -= instance.OnInteract;
-            @Interact.canceled -= instance.OnInteract;
             @Crouch.started -= instance.OnCrouch;
             @Crouch.performed -= instance.OnCrouch;
             @Crouch.canceled -= instance.OnCrouch;
@@ -1484,6 +1570,7 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ScrollWheel;
     private readonly InputAction m_UI_TrackedDevicePosition;
     private readonly InputAction m_UI_TrackedDeviceOrientation;
+    private readonly InputAction m_UI_Interact;
     /// <summary>
     /// Provides access to input actions defined in input action map "UI".
     /// </summary>
@@ -1535,6 +1622,10 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "UI/TrackedDeviceOrientation".
         /// </summary>
         public InputAction @TrackedDeviceOrientation => m_Wrapper.m_UI_TrackedDeviceOrientation;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/Interact".
+        /// </summary>
+        public InputAction @Interact => m_Wrapper.m_UI_Interact;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1591,6 +1682,9 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
             @TrackedDeviceOrientation.started += instance.OnTrackedDeviceOrientation;
             @TrackedDeviceOrientation.performed += instance.OnTrackedDeviceOrientation;
             @TrackedDeviceOrientation.canceled += instance.OnTrackedDeviceOrientation;
+            @Interact.started += instance.OnInteract;
+            @Interact.performed += instance.OnInteract;
+            @Interact.canceled += instance.OnInteract;
         }
 
         /// <summary>
@@ -1632,6 +1726,9 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
             @TrackedDeviceOrientation.started -= instance.OnTrackedDeviceOrientation;
             @TrackedDeviceOrientation.performed -= instance.OnTrackedDeviceOrientation;
             @TrackedDeviceOrientation.canceled -= instance.OnTrackedDeviceOrientation;
+            @Interact.started -= instance.OnInteract;
+            @Interact.performed -= instance.OnInteract;
+            @Interact.canceled -= instance.OnInteract;
         }
 
         /// <summary>
@@ -1665,6 +1762,113 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="UIActions" /> instance referencing this action map.
     /// </summary>
     public UIActions @UI => new UIActions(this);
+
+    // Ball
+    private readonly InputActionMap m_Ball;
+    private List<IBallActions> m_BallActionsCallbackInterfaces = new List<IBallActions>();
+    private readonly InputAction m_Ball_Kick;
+    private readonly InputAction m_Ball_Header;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "Ball".
+    /// </summary>
+    public struct BallActions
+    {
+        private @FootballInput m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public BallActions(@FootballInput wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "Ball/Kick".
+        /// </summary>
+        public InputAction @Kick => m_Wrapper.m_Ball_Kick;
+        /// <summary>
+        /// Provides access to the underlying input action "Ball/Header".
+        /// </summary>
+        public InputAction @Header => m_Wrapper.m_Ball_Header;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_Ball; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="BallActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(BallActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="BallActions" />
+        public void AddCallbacks(IBallActions instance)
+        {
+            if (instance == null || m_Wrapper.m_BallActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_BallActionsCallbackInterfaces.Add(instance);
+            @Kick.started += instance.OnKick;
+            @Kick.performed += instance.OnKick;
+            @Kick.canceled += instance.OnKick;
+            @Header.started += instance.OnHeader;
+            @Header.performed += instance.OnHeader;
+            @Header.canceled += instance.OnHeader;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="BallActions" />
+        private void UnregisterCallbacks(IBallActions instance)
+        {
+            @Kick.started -= instance.OnKick;
+            @Kick.performed -= instance.OnKick;
+            @Kick.canceled -= instance.OnKick;
+            @Header.started -= instance.OnHeader;
+            @Header.performed -= instance.OnHeader;
+            @Header.canceled -= instance.OnHeader;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="BallActions.UnregisterCallbacks(IBallActions)" />.
+        /// </summary>
+        /// <seealso cref="BallActions.UnregisterCallbacks(IBallActions)" />
+        public void RemoveCallbacks(IBallActions instance)
+        {
+            if (m_Wrapper.m_BallActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="BallActions.AddCallbacks(IBallActions)" />
+        /// <seealso cref="BallActions.RemoveCallbacks(IBallActions)" />
+        /// <seealso cref="BallActions.UnregisterCallbacks(IBallActions)" />
+        public void SetCallbacks(IBallActions instance)
+        {
+            foreach (var item in m_Wrapper.m_BallActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_BallActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="BallActions" /> instance referencing this action map.
+    /// </summary>
+    public BallActions @Ball => new BallActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -1785,13 +1989,6 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAttack(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Interact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnInteract(InputAction.CallbackContext context);
-        /// <summary>
         /// Method invoked when associated input action "Crouch" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -1904,5 +2101,34 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Interact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnInteract(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Ball" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="BallActions.AddCallbacks(IBallActions)" />
+    /// <seealso cref="BallActions.RemoveCallbacks(IBallActions)" />
+    public interface IBallActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Kick" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnKick(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Header" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnHeader(InputAction.CallbackContext context);
     }
 }

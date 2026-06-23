@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -19,6 +20,7 @@ public sealed class FootballPlayerController : MonoBehaviour
     [SerializeField] private float _groundAcceleration = 70f;
     [SerializeField] private float _airAcceleration = 25f;
     [SerializeField] private float _jumpForce = 9f;
+    [SerializeField, Min(0)] private int _airJumpCount = 1;
     [SerializeField, Min(1f)] private float _fallGravityMultiplier = 2.5f;
 
     [SerializeField] private float _coyoteTime = 0.08f;
@@ -41,6 +43,7 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private float _coyoteTimer;
     private float _jumpBufferTimer;
+    private int _remainingAirJumps;
 
     private FootballPlayerControlSource _controlSource = FootballPlayerControlSource.Gamepad;
     private InputDevice _controlDevice;
@@ -50,6 +53,13 @@ public sealed class FootballPlayerController : MonoBehaviour
     private Vector3 _groundNormal = Vector3.up;
     private int _facingDirection = 1;
 
+    public event Action<FootballPlayerControlSource, InputDevice> InputAssigned;
+    public event Action DoubleJumped;
+
+    public FootballPlayerControlSource ControlSource => _controlSource;
+    public InputDevice ControlDevice => _controlDevice;
+    public Vector2 MoveInput => _moveInput;
+    public int FacingDirection => _facingDirection;
     public bool IsGrounded => _isGrounded;
     public bool IsRunning => !_isJumping && _isGrounded && Mathf.Abs(_moveInput.x) > 0.05f;
     public bool IsJumping => _isJumping;
@@ -76,8 +86,10 @@ public sealed class FootballPlayerController : MonoBehaviour
         _controlDevice = device;
         _moveInput = Vector2.zero;
         _jumpBufferTimer = 0f;
+        _remainingAirJumps = _airJumpCount;
 
         ApplyInputRestrictions();
+        InputAssigned?.Invoke(_controlSource, _controlDevice);
     }
 
     private void ResolveReferences()
@@ -136,13 +148,7 @@ public sealed class FootballPlayerController : MonoBehaviour
 
         _input.devices = _controlDevice != null ? new[] { _controlDevice } : null;
 
-        _input.bindingMask = _controlSource switch
-        {
-            FootballPlayerControlSource.WasdKeyboard => InputBinding.MaskByGroup("WASD"),
-            FootballPlayerControlSource.ArrowKeyboard => InputBinding.MaskByGroup("Arrows"),
-            FootballPlayerControlSource.Gamepad => InputBinding.MaskByGroup("Gamepad"),
-            _ => null
-        };
+        _input.bindingMask = FootballInputBindingMasks.FromControlSource(_controlSource);
 
         if (wasEnabled)
             _input.Player.Enable();
@@ -201,7 +207,16 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void UpdateTimers()
     {
-        _coyoteTimer = _isGrounded ? _coyoteTime : Mathf.Max(0f, _coyoteTimer - Time.fixedDeltaTime);
+        if (_isGrounded)
+        {
+            _coyoteTimer = _coyoteTime;
+            _remainingAirJumps = _airJumpCount;
+        }
+        else
+        {
+            _coyoteTimer = Mathf.Max(0f, _coyoteTimer - Time.fixedDeltaTime);
+        }
+
         _jumpBufferTimer = Mathf.Max(0f, _jumpBufferTimer - Time.fixedDeltaTime);
     }
 
@@ -254,7 +269,13 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void TryJump()
     {
-        if (_jumpBufferTimer <= 0f || _coyoteTimer <= 0f)
+        if (_jumpBufferTimer <= 0f)
+            return;
+
+        bool canUseGroundJump = _coyoteTimer > 0f;
+        bool canUseAirJump = !canUseGroundJump && _remainingAirJumps > 0;
+
+        if (!canUseGroundJump && !canUseAirJump)
             return;
 
         Vector3 velocity = _rigidbody.linearVelocity;
@@ -266,6 +287,12 @@ public sealed class FootballPlayerController : MonoBehaviour
         _isJumping = true;
         _jumpBufferTimer = 0f;
         _coyoteTimer = 0f;
+
+        if (canUseAirJump)
+        {
+            _remainingAirJumps--;
+            DoubleJumped?.Invoke();
+        }
     }
 
     private void UpdateJumpingState()
@@ -338,6 +365,9 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void UpdateFacing()
     {
+        if (!_isGrounded || _isJumping)
+            return;
+
         if (Mathf.Abs(_moveInput.x) < 0.05f)
             return;
 

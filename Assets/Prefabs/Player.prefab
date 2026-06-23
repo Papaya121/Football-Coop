@@ -13,6 +13,15 @@ GameObject:
   - component: {fileID: 6277767701401271849}
   - component: {fileID: 3041394016312983675}
   - component: {fileID: 6271927328437773888}
+  - component: {fileID: 5164289813510719024}
+  - component: {fileID: 6716382404828096528}
+  - component: {fileID: 6932915085668317244}
+  - component: {fileID: 8174200598280574931}
+  - component: {fileID: 4251739061579830641}
+  - component: {fileID: 7593518603217549263}
+  - component: {fileID: 8804757512880467392}
+  - component: {fileID: 7350296469281035196}
+  - component: {fileID: 4116907725425961043}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -105,7 +114,8 @@ MonoBehaviour:
   _moveSpeed: 7
   _groundAcceleration: 70
   _airAcceleration: 25
-  _jumpForce: 7
+  _jumpForce: 6.4
+  _airJumpCount: 1
   _fallGravityMultiplier: 1.5
   _coyoteTime: 0.08
   _jumpBufferTime: 0.1
@@ -128,7 +138,243 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FootballPlayerAnimator
   _controller: {fileID: 3041394016312983675}
+  _kicker: {fileID: 6716382404828096528}
+  _bicycleKicker: {fileID: 6932915085668317244}
+  _header: {fileID: 4251739061579830641}
   _animator: {fileID: 3148235117166491762}
+  _kickAnimationTriggerMode: 0
+  _bicycleKickAnimationTriggerMode: 0
+  _headerAnimationTriggerMode: 0
+--- !u!114 &5164289813510719024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f6e63f4cb614b9b84334ef7594d36e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallReceiver
+  _receptionProfile:
+    _minimumImpactSpeed: 1.25
+    _horizontalVelocityMultiplier: 0.16
+    _verticalVelocityMultiplier: 0.12
+    _receiverVelocityInfluence: 0.25
+    _snapToStopSpeed: 0.25
+    _angularVelocityMultiplier: 0.2
+    _cooldown: 0.08
+--- !u!114 &6716382404828096528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0be9f655ebf3436d88bce86842365937, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallKicker
+  _controller: {fileID: 3041394016312983675}
+  _kickOrigin: {fileID: 0}
+  _originOffset: {x: 0, y: 0.65, z: 0}
+  _zoneOrigin:
+    _useColliderAnchor: 1
+    _collider: {fileID: 6277767701401271849}
+    _boundsAnchor: {x: 0.5, y: 0.325, z: 0.5}
+    _offset: {x: 0, y: 0, z: 0}
+  _ballMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _kickProfile:
+    _range: 1.05
+    _maxKickAngle: 105
+    _speed: 15
+    _upwardInfluence: 0.18
+    _playerVelocityInfluence: 0.35
+    _spin: 7.5
+    _cooldown: 0.18
+    _receptionSuppressionTime: 0.16
+--- !u!114 &6932915085668317244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6024b9b34474330b3c809961ee1b64d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallBicycleKicker
+  _controller: {fileID: 3041394016312983675}
+  _bicycleKickOrigin: {fileID: 0}
+  _originOffset: {x: 0, y: 1.15, z: 0}
+  _zoneOrigin:
+    _useColliderAnchor: 1
+    _collider: {fileID: 6277767701401271849}
+    _boundsAnchor: {x: 0.5, y: 0.575, z: 0.5}
+    _offset: {x: 0, y: 0, z: 0}
+  _ballMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _bicycleKickProfile:
+    _range: 1.25
+    _minimumBallHeightFromOrigin: -0.75
+    _speed: 16
+    _upwardInfluence: 0.35
+    _playerVelocityInfluence: 0.25
+    _backInputThreshold: 0.5
+    _spin: 9
+    _cooldown: 0.35
+    _receptionSuppressionTime: 0.22
+    _ballCollisionIgnoreTime: 0.25
+--- !u!114 &8174200598280574931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 980e0de30fbc4a878671c7f923ec8da3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallKickInput
+  _controller: {fileID: 3041394016312983675}
+  _kicker: {fileID: 6716382404828096528}
+  _bicycleKicker: {fileID: 6932915085668317244}
+--- !u!114 &4251739061579830641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e645e6f43940b6aaca18e4d4914d9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallHeader
+  _controller: {fileID: 3041394016312983675}
+  _headerOrigin: {fileID: 0}
+  _originOffset: {x: 0, y: 1.65, z: 0}
+  _zoneOrigin:
+    _useColliderAnchor: 1
+    _collider: {fileID: 6277767701401271849}
+    _boundsAnchor: {x: 0.5, y: 0.825, z: 0.5}
+    _offset: {x: 0, y: 0.33, z: 0}
+  _ballMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _headerProfile:
+    _range: 0.8
+    _maxHeaderAngle: 140
+    _speed: 13
+    _upwardInfluence: 0.28
+    _playerVelocityInfluence: 0.35
+    _spin: 2.5
+    _cooldown: 0.22
+    _receptionSuppressionTime: 0.18
+--- !u!114 &7593518603217549263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b331fcd02dc44d8b25d7194e9e2466c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallHeaderInput
+  _controller: {fileID: 3041394016312983675}
+  _header: {fileID: 4251739061579830641}
+--- !u!114 &8804757512880467392
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a5812c7446a42fc9e8f9a46c84fd603, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallActionDebugLogger
+  _kicker: {fileID: 6716382404828096528}
+  _bicycleKicker: {fileID: 6932915085668317244}
+  _header: {fileID: 4251739061579830641}
+  _logSuccessfulActions: 1
+--- !u!114 &7350296469281035196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4a7e478597f4fc7b1aab9922ade8abd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBicycleKickScriptedAnimation
+  _controller: {fileID: 3041394016312983675}
+  _bicycleKicker: {fileID: 6932915085668317244}
+  _playerAnimator: {fileID: 6271927328437773888}
+  _rotationRoot: {fileID: 7747885967063647855}
+  _playKickAnimation: 1
+  _duration: 1
+  _spinCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _rotationDegrees: 360
+  _spinOppositeFacing: 0
+--- !u!114 &4116907725425961043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625839728594760464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a048a2dc3d64dcebfe7493e9dbcf3ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootballBallActionZoneGizmos
+  _drawHitZones: 1
+  _drawOnlyWhenSelected: 0
+  _drawKickZone: 1
+  _drawHeaderZone: 1
+  _drawBicycleKickZone: 1
+  _kicker: {fileID: 6716382404828096528}
+  _header: {fileID: 4251739061579830641}
+  _bicycleKicker: {fileID: 6932915085668317244}
+  _kickColor: {r: 1, g: 0.72, b: 0.08, a: 1}
+  _headerColor: {r: 0.2, g: 0.8, b: 1, a: 1}
+  _bicycleKickColor: {r: 1, g: 0.25, b: 0.9, a: 1}
 --- !u!1 &4865819625921536836
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,6 +566,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 9601cd22fc5e745e4b06173c19d03462, type: 2}
+    - target: {fileID: 5866666021909216657, guid: e045b1579af4c4f0e8bb1ed35cb04261, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

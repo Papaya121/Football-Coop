@@ -34,19 +34,10 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Interact",
-                    "type": "Button",
-                    "id": "852140f2-7766-474d-8707-702459ba45f3",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "Hold",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Crouch",
                     "type": "Button",
                     "id": "27c5f898-bc57-4ee1-8800-db469aca5fe3",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -454,28 +445,6 @@
                 },
                 {
                     "name": "",
-                    "id": "1c04ea5f-b012-41d1-a6f7-02e963b52893",
-                    "path": "<Keyboard>/e",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "Interact",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "b3f66d0b-7751-423f-908b-a11c5bd95930",
-                    "path": "<Gamepad>/buttonNorth",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "Interact",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "4f4649ac-64a8-4a73-af11-b3faef356a4d",
                     "path": "<Gamepad>/buttonEast",
                     "interactions": "",
@@ -590,6 +559,15 @@
                     "expectedControlType": "Quaternion",
                     "processors": "",
                     "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Interact",
+                    "type": "Button",
+                    "id": "02324d12-3a46-4e80-8de4-196569b43893",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "Hold",
                     "initialStateCheck": false
                 }
             ],
@@ -1009,6 +987,120 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "TrackedDeviceOrientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "275c6c1a-9b34-4b8b-8c41-b7d78311fee1",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "919b48fb-0c27-406d-b626-6872af079ca1",
+                    "path": "<Gamepad>/buttonNorth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Ball",
+            "id": "3b2f4568-6625-4f67-9cb7-d37b477459dd",
+            "actions": [
+                {
+                    "name": "Kick",
+                    "type": "Button",
+                    "id": "d3e01ab5-b213-4dd2-9708-6a05dc4b3224",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Header",
+                    "type": "Button",
+                    "id": "1440ffc8-e493-48b9-a0eb-8ce2fb02bdd1",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "87bef1c0-7140-4828-8d79-9b35c0a3a1f1",
+                    "path": "<Keyboard>/k",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";WASD",
+                    "action": "Kick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "88254465-4ea4-43dd-9ac1-40ad74df2b66",
+                    "path": "<Keyboard>/leftBracket",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Arrows",
+                    "action": "Kick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "153fed9d-2b7d-4fb5-81d1-87a78f84347a",
+                    "path": "<Gamepad>/buttonEast",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Gamepad",
+                    "action": "Kick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5d498656-b622-4482-bebb-6c6a5af43f29",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";WASD",
+                    "action": "Header",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9eca45a4-904a-47eb-bcf2-85c067ed90ab",
+                    "path": "<Keyboard>/rightBracket",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Arrows",
+                    "action": "Header",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "beae4f68-92e7-4fb6-a4d2-f199e61bb8a4",
+                    "path": "<Gamepad>/buttonNorth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Gamepad",
+                    "action": "Header",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
