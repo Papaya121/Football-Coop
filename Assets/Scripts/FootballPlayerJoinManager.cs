@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-100)]
 public sealed class FootballPlayerJoinManager : MonoBehaviour
@@ -11,6 +12,7 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
     private readonly FootballPlayerControlSource[] _assignedSources = new FootballPlayerControlSource[2];
     private readonly InputDevice[] _assignedDevices = new InputDevice[2];
 
+    private InputAction _restartAction;
     private int _assignedPlayerCount;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -24,6 +26,9 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
 
     private void Awake()
     {
+        _restartAction = new InputAction("Restart", InputActionType.Button, "<Keyboard>/r");
+        _restartAction.performed += OnRestart;
+
         _players[0] = FindScenePlayer("Player_L");
         _players[1] = FindScenePlayer("Player_R");
 
@@ -34,6 +39,26 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
             else
                 HidePlayer(_players[i]);
         }
+    }
+
+    private void OnEnable()
+    {
+        _restartAction?.Enable();
+    }
+
+    private void OnDisable()
+    {
+        _restartAction?.Disable();
+    }
+
+    private void OnDestroy()
+    {
+        if (_restartAction == null)
+            return;
+
+        _restartAction.performed -= OnRestart;
+        _restartAction.Dispose();
+        _restartAction = null;
     }
 
     private void Update()
@@ -139,6 +164,35 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
             keyboard.leftArrowKey.wasPressedThisFrame ||
             keyboard.downArrowKey.wasPressedThisFrame ||
             keyboard.rightArrowKey.wasPressedThisFrame;
+    }
+
+    private void OnRestart(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        RestartCurrentScene();
+    }
+
+    private static void RestartCurrentScene()
+    {
+        Scene activeScene = SceneManager.GetActiveScene();
+
+#if UNITY_EDITOR
+        if (activeScene.buildIndex < 0 && !string.IsNullOrEmpty(activeScene.path))
+        {
+            UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(
+                activeScene.path,
+                new LoadSceneParameters(LoadSceneMode.Single)
+            );
+            return;
+        }
+#endif
+
+        if (activeScene.buildIndex >= 0)
+            SceneManager.LoadScene(activeScene.buildIndex);
+        else
+            SceneManager.LoadScene(activeScene.name);
     }
 
     private static bool WasGamepadPressed(Gamepad gamepad)

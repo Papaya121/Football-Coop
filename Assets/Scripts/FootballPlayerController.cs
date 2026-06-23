@@ -59,6 +59,9 @@ public sealed class FootballPlayerController : MonoBehaviour
         ResolveReferences();
         EnsureInput();
 
+        if (_visualRoot)
+            _facingDirection = (int)_visualRoot.localScale.x;
+
         _defaultColliderCenter = _collider.center;
         _defaultColliderHeight = _collider.height;
 
