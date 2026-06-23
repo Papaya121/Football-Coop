@@ -1983,8 +1983,8 @@ PrefabInstance:
       value: SliderObj (4)
       objectReference: {fileID: 0}
     - target: {fileID: 3345144271870204781, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
-      propertyPath: _parameterKey
-      value: player_jump
+      propertyPath: _parameter
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 3917316586102193259, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
       propertyPath: m_AnchorMax.x
@@ -2719,8 +2719,8 @@ PrefabInstance:
       value: SliderObj (3)
       objectReference: {fileID: 0}
     - target: {fileID: 3345144271870204781, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
-      propertyPath: _parameterKey
-      value: player_gravity
+      propertyPath: _parameter
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3917316586102193259, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
       propertyPath: m_AnchorMax.x
@@ -3002,8 +3002,8 @@ PrefabInstance:
       value: SliderObj (2)
       objectReference: {fileID: 0}
     - target: {fileID: 3345144271870204781, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
-      propertyPath: _parameterKey
-      value: ball_scale
+      propertyPath: _parameter
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3917316586102193259, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
       propertyPath: m_AnchorMax.x
@@ -3260,8 +3260,8 @@ PrefabInstance:
       value: SliderObj (1)
       objectReference: {fileID: 0}
     - target: {fileID: 3345144271870204781, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
-      propertyPath: _parameterKey
-      value: ball_bounce
+      propertyPath: _parameter
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3917316586102193259, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
       propertyPath: m_AnchorMax.x
@@ -3925,8 +3925,8 @@ PrefabInstance:
       value: SliderObj
       objectReference: {fileID: 0}
     - target: {fileID: 3345144271870204781, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
-      propertyPath: _parameterKey
-      value: ball_gravity
+      propertyPath: _parameter
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3917316586102193259, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
       propertyPath: m_AnchorMax.x
@@ -4071,8 +4071,8 @@ PrefabInstance:
       value: SliderObj (5)
       objectReference: {fileID: 0}
     - target: {fileID: 3345144271870204781, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
-      propertyPath: _parameterKey
-      value: player_scale
+      propertyPath: _parameter
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 3917316586102193259, guid: 9de60fcfec2888b45aa080a75de6ab15, type: 3}
       propertyPath: m_AnchorMax.x

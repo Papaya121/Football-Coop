@@ -13,6 +13,8 @@ public enum FootballPlayerControlSource
 [RequireComponent(typeof(CapsuleCollider))]
 public sealed class FootballPlayerController : MonoBehaviour
 {
+    private const float MinimumScaleMultiplier = 0.01f;
+
     [SerializeField] private Transform _visualRoot;
     [SerializeField] private LayerMask _groundMask;
 
@@ -36,6 +38,8 @@ public sealed class FootballPlayerController : MonoBehaviour
     private Rigidbody _rigidbody;
     private CapsuleCollider _collider;
     private PhysicsMaterial _movementMaterial;
+    private Vector3 _baseScale;
+    private bool _hasBaseScale;
     private Vector3 _defaultColliderCenter;
     private float _defaultColliderHeight;
     private Vector3 _initialVisualScale;
@@ -54,6 +58,8 @@ public sealed class FootballPlayerController : MonoBehaviour
     private bool _isJumping;
     private Vector3 _groundNormal = Vector3.up;
     private int _facingDirection = 1;
+    private float _gravity = GameParameterDefinitions.DefaultPlayerGravity;
+    private float _scaleMultiplier = GameParameterDefinitions.DefaultPlayerScale;
 
     public event Action<FootballPlayerControlSource, InputDevice> InputAssigned;
     public event Action DoubleJumped;
@@ -70,6 +76,7 @@ public sealed class FootballPlayerController : MonoBehaviour
     {
         ResolveReferences();
         EnsureInput();
+        CaptureBaseScale();
 
         if (_visualRoot)
         {
@@ -82,6 +89,7 @@ public sealed class FootballPlayerController : MonoBehaviour
         _defaultColliderHeight = _collider.height;
 
         ConfigureRigidbody();
+        ApplyGameParameters();
     }
 
     public void AssignInput(FootballPlayerControlSource source, InputDevice device = null)
@@ -144,6 +152,9 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void OnEnable()
     {
+        GameParameterSessionValues.ValueChanged += OnGameParameterChanged;
+        ApplyGameParameters();
+
         EnsureInput();
 
         _input.Player.Move.performed += OnMove;
@@ -155,6 +166,8 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void OnDisable()
     {
+        GameParameterSessionValues.ValueChanged -= OnGameParameterChanged;
+
         if (_input == null)
             return;
 
@@ -196,8 +209,8 @@ public sealed class FootballPlayerController : MonoBehaviour
         UpdateTimers();
         UpdateJumpingState();
         Move();
-        ApplyExtraFallGravity();
         TryJump();
+        ApplyGravity();
         UpdateColliderShape();
         LockPlane();
         UpdateFacing();
@@ -220,6 +233,7 @@ public sealed class FootballPlayerController : MonoBehaviour
     {
         _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         _rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        _rigidbody.useGravity = false;
         _rigidbody.freezeRotation = true;
 
         _rigidbody.constraints =
@@ -336,12 +350,17 @@ public sealed class FootballPlayerController : MonoBehaviour
             _isJumping = false;
     }
 
-    private void ApplyExtraFallGravity()
+    private void ApplyGravity()
     {
+        Vector3 gravityAcceleration = GetGravityAcceleration(_gravity);
+
+        if (_gravity > 0f)
+            _rigidbody.AddForce(gravityAcceleration, ForceMode.Acceleration);
+
         if (_isGrounded || _rigidbody.linearVelocity.y >= 0f)
             return;
 
-        Vector3 extraGravity = Physics.gravity * (_fallGravityMultiplier - 1f);
+        Vector3 extraGravity = gravityAcceleration * (_fallGravityMultiplier - 1f);
         _rigidbody.AddForce(extraGravity, ForceMode.Acceleration);
     }
 
@@ -425,5 +444,45 @@ public sealed class FootballPlayerController : MonoBehaviour
     {
         value.z = 0f;
         return value;
+    }
+
+    private void CaptureBaseScale()
+    {
+        if (_hasBaseScale)
+            return;
+
+        _baseScale = transform.localScale;
+        _hasBaseScale = true;
+    }
+
+    private void ApplyGameParameters()
+    {
+        _gravity = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerGravity));
+        _jumpForce = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerJump));
+        _scaleMultiplier = Mathf.Max(MinimumScaleMultiplier, GameParameterSessionValues.GetValue(GameParameterId.PlayerScale));
+
+        ApplyScale();
+    }
+
+    private void ApplyScale()
+    {
+        CaptureBaseScale();
+        transform.localScale = _baseScale * _scaleMultiplier;
+    }
+
+    private void OnGameParameterChanged(string key, float value)
+    {
+        if (!GameParameterDefinitions.IsPlayerParameter(key))
+            return;
+
+        ApplyGameParameters();
+    }
+
+    private static Vector3 GetGravityAcceleration(float gravity)
+    {
+        if (Physics.gravity.sqrMagnitude <= 0f)
+            return Vector3.down * gravity;
+
+        return Physics.gravity.normalized * gravity;
     }
 }

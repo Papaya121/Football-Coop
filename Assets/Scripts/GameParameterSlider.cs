@@ -8,13 +8,14 @@ public sealed class GameParameterSlider : MonoBehaviour
 {
     private const string DefaultValueFormat = "0.0";
 
-    [SerializeField] private string _parameterKey;
+    [SerializeField] private GameParameterId _parameter = GameParameterId.BallGravity;
     [SerializeField] private Slider _slider;
     [SerializeField] private TMP_Text _valueText;
     [SerializeField] private string _valueFormat = DefaultValueFormat;
 
-    public string ParameterKey => GetResolvedKey();
-    public float Value => _slider != null ? _slider.value : GameParameterSessionValues.GetValue(GetResolvedKey(), 0f);
+    public GameParameterId Parameter => _parameter;
+    public string ParameterKey => GameParameterDefinitions.GetKey(_parameter);
+    public float Value => _slider != null ? _slider.value : GameParameterSessionValues.GetValue(_parameter);
 
     private void Reset()
     {
@@ -43,18 +44,18 @@ public sealed class GameParameterSlider : MonoBehaviour
 
     private void OnValidate()
     {
-        RefreshText(_slider != null ? _slider.value : 0f);
+        RefreshText(_slider != null ? _slider.value : GameParameterDefinitions.GetDefaultValue(_parameter));
     }
 
     private void OnSliderValueChanged(float value)
     {
-        GameParameterSessionValues.SetValue(GetResolvedKey(), value);
+        GameParameterSessionValues.SetValue(_parameter, value);
         RefreshText(value);
     }
 
     private void ApplyStoredValue()
     {
-        float value = GameParameterSessionValues.GetValue(GetResolvedKey(), _slider != null ? _slider.value : 0f);
+        float value = GameParameterSessionValues.GetValue(_parameter);
 
         if (_slider != null)
         {
@@ -62,7 +63,7 @@ public sealed class GameParameterSlider : MonoBehaviour
             value = _slider.value;
         }
 
-        GameParameterSessionValues.SetValue(GetResolvedKey(), value);
+        GameParameterSessionValues.SetValue(_parameter, value);
         RefreshText(value);
     }
 
@@ -72,11 +73,6 @@ public sealed class GameParameterSlider : MonoBehaviour
             return;
 
         _valueText.text = value.ToString(GetValueFormat(), CultureInfo.InvariantCulture);
-    }
-
-    private string GetResolvedKey()
-    {
-        return string.IsNullOrWhiteSpace(_parameterKey) ? gameObject.name : _parameterKey;
     }
 
     private string GetValueFormat()

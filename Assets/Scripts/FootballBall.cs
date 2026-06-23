@@ -5,11 +5,20 @@ using UnityEngine;
 [RequireComponent(typeof(SphereCollider))]
 public sealed class FootballBall : MonoBehaviour
 {
+    private const float MinimumScaleMultiplier = 0.01f;
+
     [SerializeField, Min(0f)] private float _maxLinearSpeed = 28f;
     [SerializeField, Min(0f)] private float _maxAngularSpeed = 45f;
     [SerializeField] private bool _lockToGameplayPlane = true;
 
     private Rigidbody _rigidbody;
+    private SphereCollider _collider;
+    private PhysicsMaterial _runtimeMaterial;
+    private Vector3 _baseScale;
+    private bool _hasBaseScale;
+    private float _gravity = GameParameterDefinitions.DefaultBallGravity;
+    private float _bounce = GameParameterDefinitions.DefaultBallBounce;
+    private float _scaleMultiplier = GameParameterDefinitions.DefaultBallScale;
     private float _passiveContactSuppressedUntil;
 
     public Vector3 LinearVelocity => _rigidbody.linearVelocity;
@@ -18,7 +27,27 @@ public sealed class FootballBall : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        CaptureBaseScale();
         ConfigureRigidbody();
+        ConfigureCollider();
+        ApplyGameParameters();
+    }
+
+    private void OnEnable()
+    {
+        GameParameterSessionValues.ValueChanged += OnGameParameterChanged;
+        ApplyGameParameters();
+    }
+
+    private void OnDisable()
+    {
+        GameParameterSessionValues.ValueChanged -= OnGameParameterChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (_runtimeMaterial != null)
+            Destroy(_runtimeMaterial);
     }
 
     private void Reset()
@@ -29,6 +58,8 @@ public sealed class FootballBall : MonoBehaviour
 
     private void FixedUpdate()
     {
+        ApplyGravity();
+
         if (_lockToGameplayPlane)
             LockToGameplayPlane();
 
@@ -114,6 +145,18 @@ public sealed class FootballBall : MonoBehaviour
     {
         if (_rigidbody == null)
             _rigidbody = GetComponent<Rigidbody>();
+
+        if (_collider == null)
+            _collider = GetComponent<SphereCollider>();
+    }
+
+    private void CaptureBaseScale()
+    {
+        if (_hasBaseScale)
+            return;
+
+        _baseScale = transform.localScale;
+        _hasBaseScale = true;
     }
 
     private void ConfigureRigidbody()
@@ -123,7 +166,59 @@ public sealed class FootballBall : MonoBehaviour
 
         _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         _rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        _rigidbody.useGravity = false;
         _rigidbody.constraints |= RigidbodyConstraints.FreezePositionZ;
+    }
+
+    private void ConfigureCollider()
+    {
+        if (_collider == null)
+            return;
+
+        if (_runtimeMaterial == null)
+            _runtimeMaterial = CreateRuntimeMaterial(_collider.sharedMaterial);
+
+        _collider.material = _runtimeMaterial;
+    }
+
+    private void ApplyGameParameters()
+    {
+        _gravity = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.BallGravity));
+        _bounce = Mathf.Clamp01(GameParameterSessionValues.GetValue(GameParameterId.BallBounce));
+        _scaleMultiplier = Mathf.Max(MinimumScaleMultiplier, GameParameterSessionValues.GetValue(GameParameterId.BallScale));
+
+        ApplyBounce();
+        ApplyScale();
+    }
+
+    private void ApplyGravity()
+    {
+        if (_gravity <= 0f)
+            return;
+
+        _rigidbody.AddForce(GetGravityAcceleration(_gravity), ForceMode.Acceleration);
+    }
+
+    private void ApplyBounce()
+    {
+        if (_runtimeMaterial == null)
+            return;
+
+        _runtimeMaterial.bounciness = _bounce;
+    }
+
+    private void ApplyScale()
+    {
+        CaptureBaseScale();
+        transform.localScale = _baseScale * _scaleMultiplier;
+    }
+
+    private void OnGameParameterChanged(string key, float value)
+    {
+        if (!GameParameterDefinitions.IsBallParameter(key))
+            return;
+
+        ApplyGameParameters();
     }
 
     private void LockToGameplayPlane()
@@ -169,5 +264,28 @@ public sealed class FootballBall : MonoBehaviour
     {
         value.z = 0f;
         return value;
+    }
+
+    private static PhysicsMaterial CreateRuntimeMaterial(PhysicsMaterial source)
+    {
+        if (source == null)
+            return new PhysicsMaterial("Football Ball Runtime");
+
+        return new PhysicsMaterial($"{source.name} Runtime")
+        {
+            dynamicFriction = source.dynamicFriction,
+            staticFriction = source.staticFriction,
+            bounciness = source.bounciness,
+            frictionCombine = source.frictionCombine,
+            bounceCombine = source.bounceCombine
+        };
+    }
+
+    private static Vector3 GetGravityAcceleration(float gravity)
+    {
+        if (Physics.gravity.sqrMagnitude <= 0f)
+            return Vector3.down * gravity;
+
+        return Physics.gravity.normalized * gravity;
     }
 }

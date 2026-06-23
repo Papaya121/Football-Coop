@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df8229fb69b4a26bff7e1c5dcc6d58d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameParameterSlider
-  _parameterKey: 
+  _parameter: 0
   _slider: {fileID: 8901879024008049680}
   _valueText: {fileID: 7224722853060788960}
   _valueFormat: 0.0
@@ -567,7 +567,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Slider
   m_Navigation:
-    m_Mode: 3
+    m_Mode: 0
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
