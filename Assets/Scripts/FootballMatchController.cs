@@ -47,7 +47,13 @@ public sealed class FootballMatchController : MonoBehaviour
         _clock.Tick(Time.deltaTime);
 
         if (ShouldResetPositionsOnRunningEnter(previousState, _clock.State))
+        {
             _matchResetter?.ResetToStartPositions();
+            FootballSoundPlayer.TryPlay(FootballSoundIds.Whistle, transform.position);
+        }
+
+        if (previousState != FootballMatchState.Finished && _clock.State == FootballMatchState.Finished)
+            FootballSoundPlayer.TryPlay(FootballSoundIds.Whistle, transform.position);
 
         RefreshHud();
     }

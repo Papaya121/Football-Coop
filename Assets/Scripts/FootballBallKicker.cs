@@ -49,7 +49,7 @@ public sealed class FootballBallKicker : MonoBehaviour
         if (!TryFindBall(out FootballBall ball))
             return false;
 
-        Vector3 linearVelocity = _kickProfile.CreateLinearVelocity(_controller.FacingDirection, _rigidbody.linearVelocity);
+        Vector3 linearVelocity = _kickProfile.CreateLinearVelocity(_controller.FacingDirection, _rigidbody.linearVelocity, ball.LinearVelocity);
         Vector3 angularVelocity = _kickProfile.CreateAngularVelocity(linearVelocity);
 
         ball.ApplyKick(linearVelocity, angularVelocity, _kickProfile.ReceptionSuppressionTime);

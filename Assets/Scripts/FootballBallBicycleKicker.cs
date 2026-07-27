@@ -70,7 +70,7 @@ public sealed class FootballBallBicycleKicker : MonoBehaviour
 
         IgnoreBallCollisionTemporarily(ball);
 
-        Vector3 linearVelocity = _bicycleKickProfile.CreateLinearVelocity(capturedFacingDirection, _rigidbody.linearVelocity);
+        Vector3 linearVelocity = _bicycleKickProfile.CreateLinearVelocity(capturedFacingDirection, _rigidbody.linearVelocity, ball.LinearVelocity);
         Vector3 angularVelocity = _bicycleKickProfile.CreateAngularVelocity(linearVelocity);
 
         ball.ApplyBicycleKick(linearVelocity, angularVelocity, _bicycleKickProfile.ReceptionSuppressionTime);

@@ -36,6 +36,26 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
             else
                 HidePlayer(_players[i]);
         }
+
+        ApplyConfirmedMenuSetup();
+    }
+
+    private void ApplyConfirmedMenuSetup()
+    {
+        if (!LocalPlayerSetupSession.IsConfirmed)
+            return;
+
+        for (int i = 0; i < _players.Length; i++)
+        {
+            if (!LocalPlayerSetupSession.TryGetPlayer(i, out FootballPlayerControlSource source, out InputDevice device))
+            {
+                Debug.LogWarning("A device selected in the menu is no longer connected. Players can join again.", this);
+                LocalPlayerSetupSession.Clear();
+                return;
+            }
+
+            TryJoin(source, device);
+        }
     }
 
     private void OnEnable()

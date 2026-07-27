@@ -66,6 +66,7 @@ public sealed class FootballScoreController : MonoBehaviour
         _scoreLockedUntil = Time.time + _scoreLockSeconds;
 
         RefreshHud();
+        FootballSoundPlayer.TryPlay(FootballSoundIds.Goal, ball.transform.position);
         GoalScored?.Invoke(scoringSide, _score.Left, _score.Right);
     }
 

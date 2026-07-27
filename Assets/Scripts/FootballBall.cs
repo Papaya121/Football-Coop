@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody))]
@@ -6,10 +7,22 @@ using UnityEngine;
 public sealed class FootballBall : MonoBehaviour
 {
     private const float MinimumScaleMultiplier = 0.01f;
+    private const byte TrailAlpha = 0x28;
 
-    [SerializeField, Min(0f)] private float _maxLinearSpeed = 28f;
+    private static readonly Color32 StrongKickTrailColor = new Color32(0xC8, 0x8D, 0x00, TrailAlpha);
+    private static readonly Color32 DefaultTrailStartColor = new Color32(0xC8, 0xC8, 0xC8, TrailAlpha);
+    private static readonly Color32 DefaultTrailEndColor = new Color32(0xCC, 0xCC, 0xCC, TrailAlpha);
+
+    [SerializeField, Min(0f)] private float _maxLinearSpeed = 24f;
     [SerializeField, Min(0f)] private float _maxAngularSpeed = 45f;
     [SerializeField] private bool _lockToGameplayPlane = true;
+    [FormerlySerializedAs("_strongKickSoundSpeed")]
+    [SerializeField, Min(0f)] private float _strongKickSpeed = 18f;
+
+    [Header("Strong kick VFX")]
+    [SerializeField] private GameObject _strongKickVfx;
+    [SerializeField, Min(0f)] private float _strongKickVfxDuration = 0.8f;
+    [SerializeField] private TrailRenderer[] _strongKickTrails;
 
     private Rigidbody _rigidbody;
     private SphereCollider _collider;
@@ -20,6 +33,8 @@ public sealed class FootballBall : MonoBehaviour
     private float _bounce = GameParameterDefinitions.DefaultBallBounce;
     private float _scaleMultiplier = GameParameterDefinitions.DefaultBallScale;
     private float _passiveContactSuppressedUntil;
+    private float _strongKickVfxEndTime;
+    private bool _strongKickVfxIsFading;
 
     public Vector3 LinearVelocity => _rigidbody.linearVelocity;
     public bool CanReceivePassiveContact => Time.time >= _passiveContactSuppressedUntil;
@@ -31,6 +46,7 @@ public sealed class FootballBall : MonoBehaviour
         ConfigureRigidbody();
         ConfigureCollider();
         ApplyGameParameters();
+        StopStrongKickVfx();
     }
 
     private void OnEnable()
@@ -42,6 +58,7 @@ public sealed class FootballBall : MonoBehaviour
     private void OnDisable()
     {
         GameParameterSessionValues.ValueChanged -= OnGameParameterChanged;
+        StopStrongKickVfx();
     }
 
     private void OnDestroy()
@@ -64,6 +81,18 @@ public sealed class FootballBall : MonoBehaviour
             LockToGameplayPlane();
 
         ClampMotion();
+        UpdateStrongKickVfx();
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision == null || collision.collider == null)
+            return;
+
+        FootballSoundSurface surface = collision.collider.GetComponentInParent<FootballSoundSurface>();
+
+        if (surface != null)
+            surface.TryPlay(collision);
     }
 
     public void ApplyReception(Vector3 linearVelocity, float angularVelocityMultiplier)
@@ -77,6 +106,10 @@ public sealed class FootballBall : MonoBehaviour
     public void ApplyKick(Vector3 linearVelocity, Vector3 angularVelocity, float passiveContactSuppressionTime)
     {
         ApplyDirectedHit(linearVelocity, angularVelocity, passiveContactSuppressionTime);
+        PlayKickSound(linearVelocity);
+
+        if (linearVelocity.magnitude >= _strongKickSpeed)
+            PlayStrongKickVfx();
     }
 
     public void ApplyHeader(Vector3 linearVelocity, Vector3 angularVelocity, float passiveContactSuppressionTime)
@@ -87,6 +120,8 @@ public sealed class FootballBall : MonoBehaviour
     public void ApplyBicycleKick(Vector3 linearVelocity, Vector3 angularVelocity, float passiveContactSuppressionTime)
     {
         ApplyDirectedHit(linearVelocity, angularVelocity, passiveContactSuppressionTime);
+        FootballSoundPlayer.TryPlay(FootballSoundIds.StrongKick, transform.position);
+        PlayStrongKickVfx();
     }
 
     public void Respawn(Vector3 position)
@@ -104,6 +139,7 @@ public sealed class FootballBall : MonoBehaviour
         _rigidbody.position = ToGameplayPlane(position);
         _rigidbody.rotation = rotation;
         transform.SetPositionAndRotation(ToGameplayPlane(position), rotation);
+        StopStrongKickVfx();
     }
 
     public Vector3 GetClosestInteractionPoint(Vector3 origin)
@@ -148,6 +184,9 @@ public sealed class FootballBall : MonoBehaviour
 
         if (_collider == null)
             _collider = GetComponent<SphereCollider>();
+
+        if (_strongKickTrails == null || _strongKickTrails.Length == 0)
+            _strongKickTrails = GetComponentsInChildren<TrailRenderer>(true);
     }
 
     private void CaptureBaseScale()
@@ -258,6 +297,107 @@ public sealed class FootballBall : MonoBehaviour
             return;
 
         _passiveContactSuppressedUntil = Mathf.Max(_passiveContactSuppressedUntil, Time.time + duration);
+    }
+
+    private void PlayKickSound(Vector3 linearVelocity)
+    {
+        string soundId = linearVelocity.magnitude >= _strongKickSpeed
+            ? FootballSoundIds.StrongKick
+            : FootballSoundIds.Kick;
+
+        FootballSoundPlayer.TryPlay(soundId, transform.position);
+    }
+
+    private void PlayStrongKickVfx()
+    {
+        if (_strongKickVfx == null)
+            return;
+
+        _strongKickVfx.SetActive(true);
+        _strongKickVfxIsFading = false;
+        _strongKickVfxEndTime = Time.time + _strongKickVfxDuration;
+        SetStrongKickTrailColors(true);
+
+        foreach (ParticleSystem particles in _strongKickVfx.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            particles.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particles.Play(false);
+        }
+    }
+
+    private void UpdateStrongKickVfx()
+    {
+        if (_strongKickVfx == null || !_strongKickVfx.activeSelf)
+            return;
+
+        if (!_strongKickVfxIsFading && Time.time >= _strongKickVfxEndTime)
+            BeginStrongKickVfxFadeOut();
+
+        if (_strongKickVfxIsFading && !HasAliveStrongKickParticles())
+            StopStrongKickVfx();
+    }
+
+    private void BeginStrongKickVfxFadeOut()
+    {
+        _strongKickVfxIsFading = true;
+        SetStrongKickTrailColors(false);
+
+        foreach (ParticleSystem particles in _strongKickVfx.GetComponentsInChildren<ParticleSystem>(true))
+            particles.Stop(false, ParticleSystemStopBehavior.StopEmitting);
+    }
+
+    private bool HasAliveStrongKickParticles()
+    {
+        foreach (ParticleSystem particles in _strongKickVfx.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            if (particles.IsAlive(false))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void StopStrongKickVfx()
+    {
+        _strongKickVfxEndTime = 0f;
+        _strongKickVfxIsFading = false;
+
+        if (_strongKickVfx == null)
+            return;
+
+        foreach (ParticleSystem particles in _strongKickVfx.GetComponentsInChildren<ParticleSystem>(true))
+            particles.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        _strongKickVfx.SetActive(false);
+        SetStrongKickTrailColors(false);
+    }
+
+    private void SetStrongKickTrailColors(bool isStrongKick)
+    {
+        ResolveReferences();
+
+        Color startColor = isStrongKick ? StrongKickTrailColor : DefaultTrailStartColor;
+        Color endColor = isStrongKick ? StrongKickTrailColor : DefaultTrailEndColor;
+        float alpha = TrailAlpha / 255f;
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new[]
+            {
+                new GradientColorKey(startColor, 0f),
+                new GradientColorKey(endColor, 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(alpha, 0f),
+                new GradientAlphaKey(alpha, 1f)
+            }
+        );
+
+        for (int i = 0; i < _strongKickTrails.Length; i++)
+        {
+            if (_strongKickTrails[i] != null)
+                _strongKickTrails[i].colorGradient = gradient;
+        }
     }
 
     private static Vector3 ToGameplayPlane(Vector3 value)

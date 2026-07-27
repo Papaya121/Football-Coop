@@ -49,10 +49,11 @@ public sealed class FootballBallHeader : MonoBehaviour
         if (!TryFindBall(out FootballBall ball))
             return false;
 
-        Vector3 linearVelocity = _headerProfile.CreateLinearVelocity(_controller.FacingDirection, _rigidbody.linearVelocity);
+        Vector3 linearVelocity = _headerProfile.CreateLinearVelocity(_controller.FacingDirection, _rigidbody.linearVelocity, ball.LinearVelocity);
         Vector3 angularVelocity = _headerProfile.CreateAngularVelocity(linearVelocity);
 
         ball.ApplyHeader(linearVelocity, angularVelocity, _headerProfile.ReceptionSuppressionTime);
+        FootballSoundPlayer.TryPlay(FootballSoundIds.Kick, ball.transform.position);
         _nextHeaderTime = Time.time + _headerProfile.Cooldown;
         Headed?.Invoke();
 

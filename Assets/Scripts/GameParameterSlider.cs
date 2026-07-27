@@ -25,11 +25,13 @@ public sealed class GameParameterSlider : MonoBehaviour
 
     private void Awake()
     {
+        ConfigureSliderRange();
         ApplyStoredValue();
     }
 
     private void OnEnable()
     {
+        ConfigureSliderRange();
         ApplyStoredValue();
 
         if (_slider != null)
@@ -44,6 +46,11 @@ public sealed class GameParameterSlider : MonoBehaviour
 
     private void OnValidate()
     {
+        ConfigureSliderRange();
+
+        if (_slider != null)
+            _slider.SetValueWithoutNotify(GameParameterDefinitions.GetDefaultValue(_parameter));
+
         RefreshText(_slider != null ? _slider.value : GameParameterDefinitions.GetDefaultValue(_parameter));
     }
 
@@ -65,6 +72,15 @@ public sealed class GameParameterSlider : MonoBehaviour
 
         GameParameterSessionValues.SetValue(_parameter, value);
         RefreshText(value);
+    }
+
+    private void ConfigureSliderRange()
+    {
+        if (_slider == null)
+            return;
+
+        _slider.minValue = GameParameterDefinitions.GetMinValue(_parameter);
+        _slider.maxValue = GameParameterDefinitions.GetMaxValue(_parameter);
     }
 
     private void RefreshText(float value)

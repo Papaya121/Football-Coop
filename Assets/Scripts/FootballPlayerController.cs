@@ -459,6 +459,7 @@ public sealed class FootballPlayerController : MonoBehaviour
     {
         _gravity = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerGravity));
         _jumpForce = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerJump));
+        _airAcceleration = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerAirAcceleration));
         _scaleMultiplier = Mathf.Max(MinimumScaleMultiplier, GameParameterSessionValues.GetValue(GameParameterId.PlayerScale));
 
         ApplyScale();

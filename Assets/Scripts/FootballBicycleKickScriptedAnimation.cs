@@ -10,6 +10,7 @@ public sealed class FootballBicycleKickScriptedAnimation : MonoBehaviour
     [SerializeField] private FootballBallBicycleKicker _bicycleKicker;
     [SerializeField] private FootballPlayerAnimator _playerAnimator;
     [SerializeField] private Transform _rotationRoot;
+    [SerializeField] private FootballBallActionAnimationTriggerMode _animationTriggerMode = FootballBallActionAnimationTriggerMode.AlwaysOnInput;
     [SerializeField] private bool _playKickAnimation = true;
     [SerializeField, Min(0.01f)] private float _duration = 0.45f;
     [SerializeField] private AnimationCurve _spinCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -34,19 +35,26 @@ public sealed class FootballBicycleKickScriptedAnimation : MonoBehaviour
     {
         ResolveReferences();
 
-        if (_bicycleKicker != null)
-            _bicycleKicker.BicycleKicked += OnBicycleKicked;
+        SubscribeToBicycleKickEvents();
     }
 
     private void OnDisable()
     {
-        if (_bicycleKicker != null)
-            _bicycleKicker.BicycleKicked -= OnBicycleKicked;
+        UnsubscribeFromBicycleKickEvents();
 
         StopSpin();
     }
 
-    private void OnBicycleKicked()
+    private void OnValidate()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        UnsubscribeFromBicycleKickEvents();
+        SubscribeToBicycleKickEvents();
+    }
+
+    private void OnBicycleKickAnimationRequested()
     {
         ResolveReferences();
 
@@ -58,6 +66,26 @@ public sealed class FootballBicycleKickScriptedAnimation : MonoBehaviour
 
         StopSpin();
         _spinCoroutine = StartCoroutine(Spin());
+    }
+
+    private void SubscribeToBicycleKickEvents()
+    {
+        if (_bicycleKicker == null)
+            return;
+
+        if (_animationTriggerMode == FootballBallActionAnimationTriggerMode.AlwaysOnInput)
+            _bicycleKicker.BicycleKickAttempted += OnBicycleKickAnimationRequested;
+        else
+            _bicycleKicker.BicycleKicked += OnBicycleKickAnimationRequested;
+    }
+
+    private void UnsubscribeFromBicycleKickEvents()
+    {
+        if (_bicycleKicker == null)
+            return;
+
+        _bicycleKicker.BicycleKickAttempted -= OnBicycleKickAnimationRequested;
+        _bicycleKicker.BicycleKicked -= OnBicycleKickAnimationRequested;
     }
 
     private IEnumerator Spin()
