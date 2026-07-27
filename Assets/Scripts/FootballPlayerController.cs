@@ -56,6 +56,9 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private bool _isGrounded;
     private bool _isJumping;
+    private bool _isNetworkControlled;
+    private bool _simulateNetworkPhysics;
+    private bool _localInputSubscribed;
     private Vector3 _groundNormal = Vector3.up;
     private int _facingDirection = 1;
     private float _gravity = GameParameterDefinitions.DefaultPlayerGravity;
@@ -104,6 +107,38 @@ public sealed class FootballPlayerController : MonoBehaviour
 
         ApplyInputRestrictions();
         InputAssigned?.Invoke(_controlSource, _controlDevice);
+    }
+
+    public void SetNetworkSimulationEnabled(bool simulatePhysics)
+    {
+        _isNetworkControlled = true;
+        _simulateNetworkPhysics = simulatePhysics;
+        UnsubscribeLocalInput();
+    }
+
+    public void SetNetworkMoveInput(Vector2 moveInput)
+    {
+        if (!_isNetworkControlled || !_simulateNetworkPhysics)
+            return;
+
+        _moveInput = Vector2.ClampMagnitude(moveInput, 1f);
+    }
+
+    public void QueueNetworkJump()
+    {
+        if (_isNetworkControlled && _simulateNetworkPhysics)
+            _jumpBufferTimer = _jumpBufferTime;
+    }
+
+    public void ApplyNetworkPresentation(Vector2 moveInput, bool isGrounded, bool isJumping, int facingDirection)
+    {
+        if (!_isNetworkControlled || _simulateNetworkPhysics)
+            return;
+
+        _moveInput = moveInput;
+        _isGrounded = isGrounded;
+        _isJumping = isJumping;
+        ApplyFacingDirection(facingDirection);
     }
 
     public void Respawn(Vector3 position, Quaternion rotation)
@@ -157,25 +192,15 @@ public sealed class FootballPlayerController : MonoBehaviour
 
         EnsureInput();
 
-        _input.Player.Move.performed += OnMove;
-        _input.Player.Move.canceled += OnMove;
-        _input.Player.Jump.performed += OnJump;
-
-        _input.Player.Enable();
+        if (!_isNetworkControlled)
+            SubscribeLocalInput();
     }
 
     private void OnDisable()
     {
         GameParameterSessionValues.ValueChanged -= OnGameParameterChanged;
 
-        if (_input == null)
-            return;
-
-        _input.Player.Move.performed -= OnMove;
-        _input.Player.Move.canceled -= OnMove;
-        _input.Player.Jump.performed -= OnJump;
-
-        _input.Player.Disable();
+        UnsubscribeLocalInput();
         _moveInput = Vector2.zero;
     }
 
@@ -204,6 +229,9 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (_isNetworkControlled && !_simulateNetworkPhysics)
+            return;
+
         _isGrounded = CheckGrounded();
 
         UpdateTimers();
@@ -388,7 +416,9 @@ public sealed class FootballPlayerController : MonoBehaviour
         float height = Mathf.Max(_defaultColliderHeight * heightScale, radius * 2f);
         float distance = height * 0.5f - radius + _groundCheckDistance;
 
-        if (!Physics.SphereCast(
+        PhysicsScene physicsScene = gameObject.scene.GetPhysicsScene();
+
+        if (!physicsScene.SphereCast(
             origin,
             radius,
             Vector3.down,
@@ -430,7 +460,12 @@ public sealed class FootballPlayerController : MonoBehaviour
         if (direction == _facingDirection)
             return;
 
-        _facingDirection = direction;
+        ApplyFacingDirection(direction);
+    }
+
+    private void ApplyFacingDirection(int direction)
+    {
+        _facingDirection = direction >= 0 ? 1 : -1;
 
         if (_visualRoot == null)
             return;
@@ -438,6 +473,30 @@ public sealed class FootballPlayerController : MonoBehaviour
         Vector3 scale = _visualRoot.localScale;
         scale.x = Mathf.Abs(scale.x) * _facingDirection;
         _visualRoot.localScale = scale;
+    }
+
+    private void SubscribeLocalInput()
+    {
+        if (_input == null || _localInputSubscribed)
+            return;
+
+        _input.Player.Move.performed += OnMove;
+        _input.Player.Move.canceled += OnMove;
+        _input.Player.Jump.performed += OnJump;
+        _input.Player.Enable();
+        _localInputSubscribed = true;
+    }
+
+    private void UnsubscribeLocalInput()
+    {
+        if (_input == null || !_localInputSubscribed)
+            return;
+
+        _input.Player.Move.performed -= OnMove;
+        _input.Player.Move.canceled -= OnMove;
+        _input.Player.Jump.performed -= OnJump;
+        _input.Player.Disable();
+        _localInputSubscribed = false;
     }
 
     private static Vector3 ToGameplayPlane(Vector3 value)

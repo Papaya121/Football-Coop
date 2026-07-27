@@ -14,9 +14,12 @@ public sealed class MenuWindowController : MonoBehaviour
     private GameObject _mainWindow;
     private GameObject _localWindow;
     private GameObject _multiplayerWindow;
+    private GameObject _matchmakingWindow;
     private Button _startButton;
+    private TMP_Text _matchmakingStatusText;
     private TMP_Text[] _deviceLabels;
     private bool _isLocalSetupOpen;
+    private FootballNetworkManager _networkManager;
 
     private void Awake()
     {
@@ -28,12 +31,15 @@ public sealed class MenuWindowController : MonoBehaviour
     private void OnEnable()
     {
         LocalPlayerSetupSession.Changed += RefreshLocalSetup;
+        ResolveNetworkManager();
+        SubscribeToNetworkEvents();
         RefreshLocalSetup();
     }
 
     private void OnDisable()
     {
         LocalPlayerSetupSession.Changed -= RefreshLocalSetup;
+        UnsubscribeFromNetworkEvents();
     }
 
     private void Update()
@@ -50,6 +56,7 @@ public sealed class MenuWindowController : MonoBehaviour
         _mainWindow = FindDirectChild("Main Window").gameObject;
         _localWindow = FindDirectChild("Local Window").gameObject;
         _multiplayerWindow = FindDirectChild("Multiplayer Window").gameObject;
+        _matchmakingWindow = FindDirectChild("Matchmaking Window").gameObject;
 
         _startButton = FindButton(_localWindow.transform, "Start Button");
         Transform inputGroup = FindDescendant(_localWindow.transform, "Input Group");
@@ -63,6 +70,9 @@ public sealed class MenuWindowController : MonoBehaviour
         }
 
         _deviceLabels = labels.ToArray();
+
+        Transform matchmakingButtons = FindDescendant(_matchmakingWindow.transform, "Buttons Group");
+        _matchmakingStatusText = FindDescendant(matchmakingButtons, "Input Text")?.GetComponent<TMP_Text>();
     }
 
     private void BindButtons()
@@ -73,6 +83,8 @@ public sealed class MenuWindowController : MonoBehaviour
         FindButton(_localWindow.transform, "Back Button").onClick.AddListener(CancelLocalSetup);
         _startButton.onClick.AddListener(StartLocalGame);
         FindButton(_multiplayerWindow.transform, "Back Button").onClick.AddListener(ShowMainWindow);
+        FindButton(_multiplayerWindow.transform, "LocalGame Button").onClick.AddListener(StartMatchmaking);
+        FindButton(_matchmakingWindow.transform, "Back Button").onClick.AddListener(CancelMatchmaking);
     }
 
     private void OpenLocalSetup()
@@ -103,6 +115,28 @@ public sealed class MenuWindowController : MonoBehaviour
         ShowOnly(_multiplayerWindow);
     }
 
+    private void StartMatchmaking()
+    {
+        ResolveNetworkManager();
+
+        if (_networkManager == null)
+        {
+            SetMatchmakingStatus("Сетевой менеджер не настроен");
+            ShowOnly(_matchmakingWindow);
+            return;
+        }
+
+        ShowOnly(_matchmakingWindow);
+        SetMatchmakingStatus("Подключение к серверу…");
+        _networkManager.FindMatch();
+    }
+
+    private void CancelMatchmaking()
+    {
+        _networkManager?.CancelMatchmaking();
+        OpenMultiplayer();
+    }
+
     private void ShowMainWindow()
     {
         _isLocalSetupOpen = false;
@@ -114,6 +148,47 @@ public sealed class MenuWindowController : MonoBehaviour
         _mainWindow.SetActive(window == _mainWindow);
         _localWindow.SetActive(window == _localWindow);
         _multiplayerWindow.SetActive(window == _multiplayerWindow);
+        _matchmakingWindow.SetActive(window == _matchmakingWindow);
+    }
+
+    private void ResolveNetworkManager()
+    {
+        if (_networkManager == null)
+            _networkManager = FindAnyObjectByType<FootballNetworkManager>();
+    }
+
+    private void SubscribeToNetworkEvents()
+    {
+        if (_networkManager == null)
+            return;
+
+        _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
+        _networkManager.MatchLoading -= HideMenuWindows;
+        _networkManager.ReturnedToMenu -= OpenMultiplayer;
+        _networkManager.MatchmakingStatusChanged += SetMatchmakingStatus;
+        _networkManager.MatchLoading += HideMenuWindows;
+        _networkManager.ReturnedToMenu += OpenMultiplayer;
+    }
+
+    private void UnsubscribeFromNetworkEvents()
+    {
+        if (_networkManager == null)
+            return;
+
+        _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
+        _networkManager.MatchLoading -= HideMenuWindows;
+        _networkManager.ReturnedToMenu -= OpenMultiplayer;
+    }
+
+    private void SetMatchmakingStatus(string status)
+    {
+        if (_matchmakingStatusText != null)
+            _matchmakingStatusText.text = status;
+    }
+
+    private void HideMenuWindows()
+    {
+        ShowOnly(null);
     }
 
     private void RefreshLocalSetup()

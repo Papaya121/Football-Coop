@@ -150,7 +150,8 @@ public sealed class FootballBallBicycleKicker : MonoBehaviour
         selectedBall = null;
 
         Vector3 origin = GetOrigin();
-        int hitCount = Physics.OverlapSphereNonAlloc(
+        PhysicsScene physicsScene = gameObject.scene.GetPhysicsScene();
+        int hitCount = physicsScene.OverlapSphere(
             origin,
             _bicycleKickProfile.Range,
             _overlapResults,

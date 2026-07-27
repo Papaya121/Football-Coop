@@ -15,6 +15,8 @@ public sealed class FootballMatchHudView : MonoBehaviour
     [SerializeField] private string _leftWinnerText = "Матч закончен!\n<color=#65A5AC>Синий</color> победил!";
     [SerializeField] private string _rightWinnerText = "Матч закончен!\n<color=#C34A4A>Красный</color> победил!";
     [SerializeField] private string _drawStatusText = "Матч закончен!\nНичья!";
+    [SerializeField] private string _victoryText = "Матч закончен!\nВы победили!";
+    [SerializeField] private string _defeatText = "Матч закончен!\nВы проиграли!";
     [SerializeField] private bool _hideEmptyStatus = true;
 
     private string _currentStatusText;
@@ -47,6 +49,20 @@ public sealed class FootballMatchHudView : MonoBehaviour
     public void ShowFinished(float remainingSeconds, FootballMatchResult result)
     {
         SetStatus(GetFinishedText(result));
+        SetTimer(remainingSeconds);
+    }
+
+    public void ShowNetworkFinished(
+        float remainingSeconds,
+        FootballMatchResult result,
+        FootballTeamSide localSide)
+    {
+        bool isDraw = result == FootballMatchResult.Draw;
+        bool localPlayerWon =
+            (result == FootballMatchResult.LeftWon && localSide == FootballTeamSide.Left) ||
+            (result == FootballMatchResult.RightWon && localSide == FootballTeamSide.Right);
+
+        SetStatus(isDraw ? _drawStatusText : localPlayerWon ? _victoryText : _defeatText);
         SetTimer(remainingSeconds);
     }
 

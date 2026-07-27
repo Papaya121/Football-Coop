@@ -19,6 +19,11 @@ public sealed class FootballGameplayCamera : MonoBehaviour
         CaptureBaseLocalPosition();
     }
 
+    public void SetTarget(Transform target)
+    {
+        _target = target;
+    }
+
     private void LateUpdate()
     {
         CaptureBaseLocalPosition();

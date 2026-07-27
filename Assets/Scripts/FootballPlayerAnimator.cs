@@ -115,6 +115,21 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
         TriggerActionAnimation(KickHash);
     }
 
+    public void TriggerBicycleKickAnimation()
+    {
+        TriggerActionAnimation(BicycleKickHash);
+    }
+
+    public void TriggerHeaderAnimation()
+    {
+        TriggerActionAnimation(HeaderHash);
+    }
+
+    public void TriggerDoubleJumpAnimation()
+    {
+        TriggerActionAnimation(DoubleJumpHash);
+    }
+
     private void ResolveReferences()
     {
         if (_controller == null)

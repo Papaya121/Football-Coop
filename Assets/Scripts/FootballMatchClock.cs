@@ -61,6 +61,13 @@ public sealed class FootballMatchClock
             State = FootballMatchState.Running;
     }
 
+    public void Finish()
+    {
+        State = FootballMatchState.Finished;
+        _countdownRemainingSeconds = 0f;
+        _goalPauseRemainingSeconds = 0f;
+    }
+
     public void Tick(float deltaTime)
     {
         if (deltaTime <= 0f)

@@ -65,7 +65,8 @@ public sealed class FootballBallHeader : MonoBehaviour
         selectedBall = null;
 
         Vector3 origin = GetOrigin();
-        int hitCount = Physics.OverlapSphereNonAlloc(
+        PhysicsScene physicsScene = gameObject.scene.GetPhysicsScene();
+        int hitCount = physicsScene.OverlapSphere(
             origin,
             _headerProfile.Range,
             _overlapResults,
