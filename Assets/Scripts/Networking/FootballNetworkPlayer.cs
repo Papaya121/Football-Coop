@@ -8,6 +8,7 @@ using UnityEngine.InputSystem;
 public sealed class FootballNetworkPlayer : NetworkBehaviour
 {
     private const float InputRefreshInterval = 0.1f;
+    private const string UntintedRendererName = "Alpha_Joints";
 
     [SerializeField] private FootballPlayerController _controller;
     [SerializeField] private FootballBallKicker _kicker;
@@ -45,6 +46,7 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
         ResolveReferences();
         ApplyTeamVisuals(_teamSide);
         _controller.SetNetworkSimulationEnabled(true);
+        SetLegacyInputEnabled(false);
         _controller.DoubleJumped += OnServerDoubleJumped;
         FootballNetworkDiagnostics.Write(
             "PLAYER-SERVER",
@@ -106,7 +108,15 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     public void ServerInitialize(FootballTeamSide teamSide)
     {
         _teamSide = teamSide;
+        ApplyTeamFacingDirection(teamSide);
         ApplyTeamVisuals(teamSide);
+    }
+
+    [Server]
+    public void ServerRespawn(Vector3 position, Quaternion rotation)
+    {
+        _controller?.Respawn(position, rotation);
+        ApplyTeamFacingDirection(_teamSide);
     }
 
     [Server]
@@ -311,7 +321,7 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
         foreach (Renderer teamRenderer in _teamRenderers)
         {
-            if (teamRenderer == null)
+            if (teamRenderer == null || teamRenderer.name == UntintedRendererName)
                 continue;
 
             Material[] materials = teamRenderer.sharedMaterials;
@@ -321,6 +331,13 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
             teamRenderer.sharedMaterials = materials;
         }
+    }
+
+    private void ApplyTeamFacingDirection(FootballTeamSide teamSide)
+    {
+        int direction = teamSide == FootballTeamSide.Left ? 1 : -1;
+        _presentationFacingDirection = direction;
+        _controller?.SetFacingDirection(direction);
     }
 
     private string DescribeRigidbody()

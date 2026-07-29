@@ -141,6 +141,11 @@ public sealed class FootballPlayerController : MonoBehaviour
         ApplyFacingDirection(facingDirection);
     }
 
+    public void SetFacingDirection(int direction)
+    {
+        ApplyFacingDirection(direction);
+    }
+
     public void Respawn(Vector3 position, Quaternion rotation)
     {
         ResolveReferences();

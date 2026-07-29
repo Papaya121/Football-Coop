@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mirror;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
@@ -39,6 +40,8 @@ public sealed class FootballNetworkManager : NetworkManager
     private bool _serverStopping;
     private bool _clientSceneReadySent;
     private bool _returningToMenu;
+    private Coroutine _clientMenuTransition;
+    private string _clientReturnStatus;
 
     public static FootballNetworkManager Instance => singleton as FootballNetworkManager;
 
@@ -92,6 +95,12 @@ public sealed class FootballNetworkManager : NetworkManager
             "CLIENT",
             $"FindMatch requested. clientActive={NetworkClient.active}; connected={NetworkClient.isConnected}; serverActive={NetworkServer.active}"
         );
+
+        if (_returningToMenu)
+        {
+            SetClientStatus("Завершение предыдущей сетевой сессии…");
+            return;
+        }
 
         if (NetworkServer.active && !NetworkClient.active)
         {
@@ -151,6 +160,10 @@ public sealed class FootballNetworkManager : NetworkManager
     public override void OnStartServer()
     {
         _serverStopping = false;
+
+        if (mode == NetworkManagerMode.ServerOnly)
+            SetMenuPresentationEnabled(false);
+
         FootballNetworkDiagnostics.Write("SERVER", $"Started. port={GetConfiguredPort()}");
         NetworkServer.RegisterHandler<FootballFindMatchMessage>(OnServerFindMatch);
         NetworkServer.RegisterHandler<FootballCancelSearchMessage>(OnServerCancelSearch);
@@ -222,6 +235,10 @@ public sealed class FootballNetworkManager : NetworkManager
     public override void OnClientChangeScene(string newSceneName, SceneOperation sceneOperation, bool customHandling)
     {
         _lastClientSceneOperation = sceneOperation;
+
+        if (sceneOperation == SceneOperation.LoadAdditive && _clientMatchId != 0)
+            SetMenuPresentationEnabled(false);
+
         base.OnClientChangeScene(newSceneName, sceneOperation, customHandling);
     }
 
@@ -229,14 +246,7 @@ public sealed class FootballNetworkManager : NetworkManager
     {
         FootballNetworkDiagnostics.Write("CLIENT", "Disconnected.");
         base.OnClientDisconnect();
-        _searchRequested = false;
-        _clientMatchId = 0;
-        _clientSceneReadySent = false;
-        _returningToMenu = false;
-        _clientMatchScene = null;
-        StartCoroutine(UnloadClientGameplayScenes());
-        SetClientStatus("Соединение с сервером закрыто");
-        ReturnedToMenu?.Invoke();
+        BeginClientReturnToMenu("Соединение с сервером закрыто");
     }
 
     public override void OnClientError(TransportError error, string reason)
@@ -607,7 +617,7 @@ public sealed class FootballNetworkManager : NetworkManager
         if (message.MatchId != _clientMatchId || _returningToMenu)
             return;
 
-        StartCoroutine(ReturnClientToMenu());
+        BeginClientReturnToMenu("Матч завершён");
     }
 
     private void SetClientStatus(string status)
@@ -731,7 +741,7 @@ public sealed class FootballNetworkManager : NetworkManager
         NetworkClient.Send(new FootballMatchSceneReadyMessage { MatchId = matchId });
     }
 
-    private IEnumerator ReturnClientToMenu()
+    private void BeginClientReturnToMenu(string status)
     {
         _returningToMenu = true;
         _searchRequested = false;
@@ -739,11 +749,19 @@ public sealed class FootballNetworkManager : NetworkManager
         _clientMatchId = 0;
         _clientMatchState = FootballMatchState.WaitingForPlayers;
         _clientMatchScene = null;
+        _clientReturnStatus = status;
 
+        if (_clientMenuTransition == null)
+            _clientMenuTransition = StartCoroutine(ReturnClientToMenu());
+    }
+
+    private IEnumerator ReturnClientToMenu()
+    {
         yield return UnloadClientGameplayScenes();
 
+        _clientMenuTransition = null;
         _returningToMenu = false;
-        SetClientStatus("Матч завершён");
+        SetClientStatus(_clientReturnStatus);
         ReturnedToMenu?.Invoke();
     }
 
@@ -785,6 +803,12 @@ public sealed class FootballNetworkManager : NetworkManager
 
             foreach (Canvas canvas in root.GetComponentsInChildren<Canvas>(true))
                 canvas.enabled = enabled;
+
+            foreach (EventSystem eventSystem in root.GetComponentsInChildren<EventSystem>(true))
+                eventSystem.enabled = enabled;
+
+            foreach (BaseInputModule inputModule in root.GetComponentsInChildren<BaseInputModule>(true))
+                inputModule.enabled = enabled;
         }
     }
 }

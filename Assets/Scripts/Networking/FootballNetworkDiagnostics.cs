@@ -6,6 +6,7 @@ using UnityEngine;
 
 public static class FootballNetworkDiagnostics
 {
+    private const string DiagnosticsSymbol = "FOOTBALL_NETWORK_DIAGNOSTICS";
     private const string DirectoryName = "NetworkDiagnostics";
     private static readonly object FileLock = new object();
     private static readonly string SessionStamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
@@ -26,6 +27,7 @@ public static class FootballNetworkDiagnostics
         }
     }
 
+    [Conditional(DiagnosticsSymbol)]
     public static void Write(string scope, string message)
     {
         try

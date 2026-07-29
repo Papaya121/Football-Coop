@@ -1,6 +1,7 @@
 using System;
 using Mirror;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(10000)]
@@ -244,6 +245,12 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
 
             foreach (Canvas canvas in root.GetComponentsInChildren<Canvas>(true))
                 canvas.enabled = enabled;
+
+            foreach (EventSystem eventSystem in root.GetComponentsInChildren<EventSystem>(true))
+                eventSystem.enabled = enabled;
+
+            foreach (BaseInputModule inputModule in root.GetComponentsInChildren<BaseInputModule>(true))
+                inputModule.enabled = enabled;
         }
     }
 

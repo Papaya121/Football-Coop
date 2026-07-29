@@ -15,6 +15,14 @@ public sealed class FootballNetworkBall : NetworkBehaviour
         ResolveReferences();
     }
 
+    public override void OnStartServer()
+    {
+        ResolveReferences();
+
+        if (_respawnInput != null)
+            _respawnInput.enabled = false;
+    }
+
     public override void OnStartClient()
     {
         ResolveReferences();

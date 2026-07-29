@@ -253,11 +253,11 @@ public sealed class FootballServerMatch : IDisposable
     {
         for (int i = 0; i < _players.Length; i++)
         {
-            if (_players[i] == null || !_players[i].TryGetComponent(out FootballPlayerController player))
+            if (_players[i] == null || !_players[i].TryGetComponent(out FootballNetworkPlayer player))
                 continue;
 
             FootballNetworkMatchScene.SpawnPoint spawnPoint = SceneContext.GetPlayerSpawnPoint(i);
-            player.Respawn(spawnPoint.Position, spawnPoint.Rotation);
+            player.ServerRespawn(spawnPoint.Position, spawnPoint.Rotation);
         }
 
         if (_ball != null)
