@@ -83,6 +83,7 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
             return;
 
         _input = new FootballInput();
+        _input.Ball.Header.wantsInitialStateCheck = true;
     }
 
     private void ApplyInputRestrictions(FootballPlayerControlSource source, InputDevice device)

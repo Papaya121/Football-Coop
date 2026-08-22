@@ -94,6 +94,7 @@ public sealed class FootballBallKickInput : MonoBehaviour
             return;
 
         _input = new FootballInput();
+        _input.Ball.Kick.wantsInitialStateCheck = true;
     }
 
     private void ApplyInputRestrictions(FootballPlayerControlSource source, InputDevice device)

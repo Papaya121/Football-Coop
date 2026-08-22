@@ -2,6 +2,13 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+public enum LocalMatchMode
+{
+    HumanVsHuman,
+    HumanVsAi,
+    Tutorial
+}
+
 public static class LocalPlayerSetupSession
 {
     public const int PlayerCapacity = 2;
@@ -13,7 +20,11 @@ public static class LocalPlayerSetupSession
 
     public static int PlayerCount { get; private set; }
     public static bool IsConfirmed { get; private set; }
-    public static bool IsReady => PlayerCount == PlayerCapacity;
+    public static LocalMatchMode MatchMode { get; private set; }
+    public static bool IsAiMatch => MatchMode == LocalMatchMode.HumanVsAi || MatchMode == LocalMatchMode.Tutorial;
+    public static bool IsTutorial => MatchMode == LocalMatchMode.Tutorial;
+    public static int RequiredHumanPlayerCount => IsAiMatch ? 1 : PlayerCapacity;
+    public static bool IsReady => PlayerCount == RequiredHumanPlayerCount;
 
     public static bool TryAdd(FootballPlayerControlSource source, InputDevice device)
     {
@@ -30,10 +41,35 @@ public static class LocalPlayerSetupSession
     public static void Confirm()
     {
         if (!IsReady)
-            throw new InvalidOperationException("Two input sources must be assigned before starting a local game.");
+            throw new InvalidOperationException($"{RequiredHumanPlayerCount} input source(s) must be assigned before starting a local game.");
 
         IsConfirmed = true;
         Changed?.Invoke();
+    }
+
+    public static bool PrepareAiMatch(FootballPlayerControlSource source, InputDevice device)
+    {
+        return PrepareSinglePlayerMatch(LocalMatchMode.HumanVsAi, source, device);
+    }
+
+    public static bool PrepareTutorialMatch(FootballPlayerControlSource source, InputDevice device)
+    {
+        return PrepareSinglePlayerMatch(LocalMatchMode.Tutorial, source, device);
+    }
+
+    private static bool PrepareSinglePlayerMatch(LocalMatchMode mode, FootballPlayerControlSource source, InputDevice device)
+    {
+        Clear();
+        MatchMode = mode;
+
+        if (!TryAdd(source, device))
+        {
+            Clear();
+            return false;
+        }
+
+        Confirm();
+        return true;
     }
 
     public static bool TryGetPlayer(int index, out FootballPlayerControlSource source, out InputDevice device)
@@ -54,6 +90,7 @@ public static class LocalPlayerSetupSession
     {
         PlayerCount = 0;
         IsConfirmed = false;
+        MatchMode = LocalMatchMode.HumanVsHuman;
         Array.Clear(_sources, 0, _sources.Length);
         Array.Clear(_deviceIds, 0, _deviceIds.Length);
         Changed?.Invoke();

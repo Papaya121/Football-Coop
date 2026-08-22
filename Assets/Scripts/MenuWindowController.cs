@@ -78,6 +78,16 @@ public sealed class MenuWindowController : MonoBehaviour
     private void BindButtons()
     {
         FindButton(_mainWindow.transform, "LocalGame Button").onClick.AddListener(OpenLocalSetup);
+        Button aiButton = FindOptionalButton(_mainWindow.transform, "AI Button");
+
+        if (aiButton != null)
+            aiButton.onClick.AddListener(StartAiGame);
+
+        Button learningButton = FindOptionalButton(_mainWindow.transform, "Learning Button");
+
+        if (learningButton != null)
+            learningButton.onClick.AddListener(StartTutorial);
+
         FindButton(_mainWindow.transform, "MultiplayerGame Button").onClick.AddListener(OpenMultiplayer);
         FindButton(_mainWindow.transform, "Exit Button").onClick.AddListener(Quit);
         FindButton(_localWindow.transform, "Back Button").onClick.AddListener(CancelLocalSetup);
@@ -106,6 +116,50 @@ public sealed class MenuWindowController : MonoBehaviour
             return;
 
         LocalPlayerSetupSession.Confirm();
+        SceneManager.LoadScene(GameplaySceneName);
+    }
+
+    private void StartAiGame()
+    {
+        StartSinglePlayerGame(false);
+    }
+
+    private void StartTutorial()
+    {
+        StartSinglePlayerGame(true);
+    }
+
+    private void StartSinglePlayerGame(bool tutorial)
+    {
+        FootballPlayerControlSource source;
+        InputDevice device;
+
+        if (Keyboard.current != null)
+        {
+            source = FootballPlayerControlSource.WasdKeyboard;
+            device = Keyboard.current;
+        }
+        else if (Gamepad.current != null || Gamepad.all.Count > 0)
+        {
+            source = FootballPlayerControlSource.Gamepad;
+            device = Gamepad.current != null ? Gamepad.current : Gamepad.all[0];
+        }
+        else
+        {
+            Debug.LogWarning("Cannot start an AI match because no keyboard or gamepad is connected.", this);
+            return;
+        }
+
+        bool prepared = tutorial
+            ? LocalPlayerSetupSession.PrepareTutorialMatch(source, device)
+            : LocalPlayerSetupSession.PrepareAiMatch(source, device);
+
+        if (!prepared)
+        {
+            Debug.LogWarning($"Failed to prepare the local {(tutorial ? "tutorial" : "AI match")} input.", this);
+            return;
+        }
+
         SceneManager.LoadScene(GameplaySceneName);
     }
 
@@ -269,6 +323,12 @@ public sealed class MenuWindowController : MonoBehaviour
         if (button == null)
             throw new MissingReferenceException($"Button '{buttonName}' is missing under {root.name}.");
         return button;
+    }
+
+    private static Button FindOptionalButton(Transform root, string buttonName)
+    {
+        Transform target = FindDescendant(root, buttonName);
+        return target != null ? target.GetComponent<Button>() : null;
     }
 
     private static Transform FindDescendant(Transform root, string objectName)

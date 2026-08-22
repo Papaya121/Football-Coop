@@ -56,8 +56,8 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private bool _isGrounded;
     private bool _isJumping;
-    private bool _isNetworkControlled;
-    private bool _simulateNetworkPhysics;
+    private bool _isExternallyControlled;
+    private bool _simulateExternalPhysics;
     private bool _localInputSubscribed;
     private Vector3 _groundNormal = Vector3.up;
     private int _facingDirection = 1;
@@ -109,30 +109,46 @@ public sealed class FootballPlayerController : MonoBehaviour
         InputAssigned?.Invoke(_controlSource, _controlDevice);
     }
 
-    public void SetNetworkSimulationEnabled(bool simulatePhysics)
+    public void SetExternalControlEnabled(bool simulatePhysics)
     {
-        _isNetworkControlled = true;
-        _simulateNetworkPhysics = simulatePhysics;
+        _isExternallyControlled = true;
+        _simulateExternalPhysics = simulatePhysics;
+        _moveInput = Vector2.zero;
         UnsubscribeLocalInput();
     }
 
-    public void SetNetworkMoveInput(Vector2 moveInput)
+    public void SetExternalMoveInput(Vector2 moveInput)
     {
-        if (!_isNetworkControlled || !_simulateNetworkPhysics)
+        if (!_isExternallyControlled || !_simulateExternalPhysics)
             return;
 
         _moveInput = Vector2.ClampMagnitude(moveInput, 1f);
     }
 
+    public void QueueExternalJump()
+    {
+        if (_isExternallyControlled && _simulateExternalPhysics)
+            _jumpBufferTimer = _jumpBufferTime;
+    }
+
+    public void SetNetworkSimulationEnabled(bool simulatePhysics)
+    {
+        SetExternalControlEnabled(simulatePhysics);
+    }
+
+    public void SetNetworkMoveInput(Vector2 moveInput)
+    {
+        SetExternalMoveInput(moveInput);
+    }
+
     public void QueueNetworkJump()
     {
-        if (_isNetworkControlled && _simulateNetworkPhysics)
-            _jumpBufferTimer = _jumpBufferTime;
+        QueueExternalJump();
     }
 
     public void ApplyNetworkPresentation(Vector2 moveInput, bool isGrounded, bool isJumping, int facingDirection)
     {
-        if (!_isNetworkControlled || _simulateNetworkPhysics)
+        if (!_isExternallyControlled || _simulateExternalPhysics)
             return;
 
         _moveInput = moveInput;
@@ -187,6 +203,7 @@ public sealed class FootballPlayerController : MonoBehaviour
             return;
 
         _input = new FootballInput();
+        _input.Player.Jump.wantsInitialStateCheck = true;
         ApplyInputRestrictions();
     }
 
@@ -197,7 +214,7 @@ public sealed class FootballPlayerController : MonoBehaviour
 
         EnsureInput();
 
-        if (!_isNetworkControlled)
+        if (!_isExternallyControlled)
             SubscribeLocalInput();
     }
 
@@ -234,7 +251,7 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_isNetworkControlled && !_simulateNetworkPhysics)
+        if (_isExternallyControlled && !_simulateExternalPhysics)
             return;
 
         _isGrounded = CheckGrounded();
