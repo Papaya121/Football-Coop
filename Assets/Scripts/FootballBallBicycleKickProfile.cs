@@ -13,7 +13,7 @@ public sealed class FootballBallBicycleKickProfile
     [SerializeField, Min(0f)] private float _maxBallVelocityBonus = 7f;
     [SerializeField, Range(0.01f, 1f)] private float _backInputThreshold = 0.5f;
     [SerializeField, Min(0f)] private float _spin = 9f;
-    [SerializeField, Min(0f)] private float _cooldown = 0.35f;
+    [SerializeField, Min(0f)] private float _cooldown = 1f;
     [SerializeField, Min(0f)] private float _receptionSuppressionTime = 0.22f;
     [SerializeField, Min(0f)] private float _ballCollisionIgnoreTime = 0.25f;
 
@@ -61,12 +61,17 @@ public sealed class FootballBallBicycleKickProfile
 
     public Vector3 CreateLinearVelocity(int facingDirection, Vector3 playerVelocity, Vector3 ballVelocity)
     {
+        return CreateLinearVelocity(facingDirection, playerVelocity, ballVelocity, 1f);
+    }
+
+    public Vector3 CreateLinearVelocity(int facingDirection, Vector3 playerVelocity, Vector3 ballVelocity, float powerMultiplier)
+    {
         Vector3 direction = new Vector3(-NormalizeFacingDirection(facingDirection), _upwardInfluence, 0f).normalized;
         Vector3 inheritedVelocity = ToGameplayPlane(playerVelocity) * _playerVelocityInfluence;
         float ballSpeedAlongHitDirection = Mathf.Abs(Vector3.Dot(ToGameplayPlane(ballVelocity), direction));
         float ballVelocityBonus = Mathf.Min(ballSpeedAlongHitDirection * _ballVelocityInfluence, _maxBallVelocityBonus);
 
-        return direction * (_speed + ballVelocityBonus) + inheritedVelocity;
+        return direction * ((_speed * Mathf.Max(0f, powerMultiplier)) + ballVelocityBonus) + inheritedVelocity;
     }
 
     public Vector3 CreateAngularVelocity(Vector3 linearVelocity)

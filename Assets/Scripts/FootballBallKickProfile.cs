@@ -8,6 +8,7 @@ public sealed class FootballBallKickProfile
     [SerializeField, Range(0f, 180f)] private float _maxKickAngle = 105f;
     [SerializeField, Min(0f)] private float _speed = 15f;
     [SerializeField, Range(0f, 1f)] private float _upwardInfluence = 0.18f;
+    [SerializeField, Range(0f, 1f)] private float _lobUpwardInfluence = 0.65f;
     [SerializeField, Range(0f, 1f)] private float _playerVelocityInfluence = 0.35f;
     [SerializeField, Range(0f, 1f)] private float _ballVelocityInfluence = 0.35f;
     [SerializeField, Min(0f)] private float _maxBallVelocityBonus = 8f;
@@ -17,6 +18,7 @@ public sealed class FootballBallKickProfile
 
     public float Range => _range;
     public float MaxKickAngle => _maxKickAngle;
+    public float Speed => _speed;
     public float Cooldown => _cooldown;
     public float ReceptionSuppressionTime => _receptionSuppressionTime;
 
@@ -41,12 +43,28 @@ public sealed class FootballBallKickProfile
 
     public Vector3 CreateLinearVelocity(int facingDirection, Vector3 playerVelocity, Vector3 ballVelocity)
     {
-        Vector3 direction = new Vector3(NormalizeFacingDirection(facingDirection), _upwardInfluence, 0f).normalized;
+        return CreateLinearVelocity(facingDirection, playerVelocity, ballVelocity, 1f);
+    }
+
+    public Vector3 CreateLinearVelocity(int facingDirection, Vector3 playerVelocity, Vector3 ballVelocity, float powerMultiplier)
+    {
+        return CreateLinearVelocity(facingDirection, playerVelocity, ballVelocity, powerMultiplier, false);
+    }
+
+    public Vector3 CreateLinearVelocity(
+        int facingDirection,
+        Vector3 playerVelocity,
+        Vector3 ballVelocity,
+        float powerMultiplier,
+        bool isLob)
+    {
+        float upwardInfluence = isLob ? _lobUpwardInfluence : _upwardInfluence;
+        Vector3 direction = new Vector3(NormalizeFacingDirection(facingDirection), upwardInfluence, 0f).normalized;
         Vector3 inheritedVelocity = ToGameplayPlane(playerVelocity) * _playerVelocityInfluence;
         float ballSpeedAlongHitDirection = Mathf.Abs(Vector3.Dot(ToGameplayPlane(ballVelocity), direction));
         float ballVelocityBonus = Mathf.Min(ballSpeedAlongHitDirection * _ballVelocityInfluence, _maxBallVelocityBonus);
 
-        return direction * (_speed + ballVelocityBonus) + inheritedVelocity;
+        return direction * ((_speed * Mathf.Max(0f, powerMultiplier)) + ballVelocityBonus) + inheritedVelocity;
     }
 
     public Vector3 CreateAngularVelocity(Vector3 linearVelocity)

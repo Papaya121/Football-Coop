@@ -51,7 +51,7 @@ public sealed class FootballBallBicycleKicker : MonoBehaviour
         return _bicycleKickProfile.CanStart(_controller);
     }
 
-    public bool TryBicycleKick()
+    public bool TryBicycleKick(float powerMultiplier = 1f)
     {
         EnsureProfile();
 
@@ -60,21 +60,27 @@ public sealed class FootballBallBicycleKicker : MonoBehaviour
         if (!_bicycleKickProfile.CanStart(_controller, capturedFacingDirection))
             return false;
 
-        BicycleKickAttempted?.Invoke();
-
         if (Time.time < _nextBicycleKickTime)
             return false;
+
+        _nextBicycleKickTime = Time.time + _bicycleKickProfile.Cooldown;
+        BicycleKickAttempted?.Invoke();
 
         if (!TryFindBall(out FootballBall ball))
             return false;
 
         IgnoreBallCollisionTemporarily(ball);
 
-        Vector3 linearVelocity = _bicycleKickProfile.CreateLinearVelocity(capturedFacingDirection, _rigidbody.linearVelocity, ball.LinearVelocity);
+        Vector3 linearVelocity = _bicycleKickProfile.CreateLinearVelocity(
+            capturedFacingDirection,
+            _rigidbody.linearVelocity,
+            ball.LinearVelocity,
+            powerMultiplier
+        );
         Vector3 angularVelocity = _bicycleKickProfile.CreateAngularVelocity(linearVelocity);
 
+        ball.RecordTouch(_controller, FootballGoalKickType.Scissor);
         ball.ApplyBicycleKick(linearVelocity, angularVelocity, _bicycleKickProfile.ReceptionSuppressionTime);
-        _nextBicycleKickTime = Time.time + _bicycleKickProfile.Cooldown;
         BicycleKicked?.Invoke();
 
         return true;

@@ -465,19 +465,8 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""a5f7a616-936b-4d29-aa6a-6d33e8961ae5"",
-                    ""path"": ""<Keyboard>/w"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""WASD"",
-                    ""action"": ""Jump"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""f542f1bb-7eb2-4480-958b-19a1adee2a6a"",
-                    ""path"": ""<Keyboard>/upArrow"",
+                    ""id"": ""bdd6026d-3633-47e8-b381-24705cc08b87"",
+                    ""path"": ""<Keyboard>/rightShift"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Arrows"",
@@ -1110,7 +1099,7 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
                     ""id"": ""d3e01ab5-b213-4dd2-9708-6a05dc4b3224"",
                     ""expectedControlType"": """",
                     ""processors"": """",
-                    ""interactions"": """",
+                    ""interactions"": ""Press(behavior=1)"",
                     ""initialStateCheck"": false
                 },
                 {
@@ -1119,7 +1108,7 @@ public partial class @FootballInput: IInputActionCollection2, IDisposable
                     ""id"": ""1440ffc8-e493-48b9-a0eb-8ce2fb02bdd1"",
                     ""expectedControlType"": """",
                     ""processors"": """",
-                    ""interactions"": """",
+                    ""interactions"": ""Press(behavior=1)"",
                     ""initialStateCheck"": false
                 }
             ],

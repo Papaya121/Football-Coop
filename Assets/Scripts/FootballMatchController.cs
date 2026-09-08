@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -14,6 +15,11 @@ public sealed class FootballMatchController : MonoBehaviour
     private FootballMatchClock _clock;
     private FootballTeamSide _lastScoringSide;
     private bool _hasLastScoringSide;
+    private bool _analyticsMatchStarted;
+    private bool _analyticsMatchFinished;
+    private bool _profileMatchRecorded;
+
+    public event Action MatchFinished;
 
     public FootballMatchState State => _clock?.State ?? FootballMatchState.WaitingForPlayers;
 
@@ -33,6 +39,9 @@ public sealed class FootballMatchController : MonoBehaviour
 
     private void Start()
     {
+        if (LocalPlayerSetupSession.MatchMode == LocalMatchMode.HumanVsAi)
+            LocalPlayerProfile.Service.BeginRatedMatch();
+
         RefreshPlayerState();
         RefreshHud();
     }
@@ -46,6 +55,12 @@ public sealed class FootballMatchController : MonoBehaviour
 
         _clock.Tick(Time.deltaTime);
 
+        if (!_analyticsMatchStarted && _clock.State == FootballMatchState.Running && !LocalPlayerSetupSession.IsTutorial)
+        {
+            _analyticsMatchStarted = true;
+            FootballAnalytics.MatchStarted(false);
+        }
+
         if (ShouldResetPositionsOnRunningEnter(previousState, _clock.State))
         {
             _matchResetter?.ResetToStartPositions();
@@ -53,7 +68,25 @@ public sealed class FootballMatchController : MonoBehaviour
         }
 
         if (previousState != FootballMatchState.Finished && _clock.State == FootballMatchState.Finished)
+        {
             FootballSoundPlayer.TryPlay(FootballSoundIds.Whistle, transform.position);
+
+            FootballMatchResult result = GetMatchResult();
+
+            if (!_profileMatchRecorded && LocalPlayerSetupSession.MatchMode == LocalMatchMode.HumanVsAi)
+            {
+                _profileMatchRecorded = true;
+                LocalPlayerProfile.Service.CompleteRatedMatch(ToLocalPlayerOutcome(result));
+            }
+
+            if (!_analyticsMatchFinished && !LocalPlayerSetupSession.IsTutorial)
+            {
+                _analyticsMatchFinished = true;
+                FootballAnalytics.MatchFinished(result == FootballMatchResult.LeftWon, result == FootballMatchResult.Draw);
+            }
+
+            MatchFinished?.Invoke();
+        }
 
         RefreshHud();
     }
@@ -87,6 +120,24 @@ public sealed class FootballMatchController : MonoBehaviour
             _matchResetter?.ResetToStartPositions();
 
         RefreshHud();
+    }
+
+    public bool TryForfeitLocalPlayer()
+    {
+        if (LocalPlayerSetupSession.MatchMode != LocalMatchMode.HumanVsAi ||
+            _profileMatchRecorded || State == FootballMatchState.Finished)
+            return false;
+
+        _profileMatchRecorded = true;
+        LocalPlayerProfile.Service.CompleteRatedMatch(PlayerMatchOutcome.Defeat);
+
+        if (!_analyticsMatchFinished)
+        {
+            _analyticsMatchFinished = true;
+            FootballAnalytics.MatchFinished(false, false);
+        }
+
+        return true;
     }
 
     private void RefreshPlayerState()
@@ -148,5 +199,15 @@ public sealed class FootballMatchController : MonoBehaviour
             return FootballMatchResult.RightWon;
 
         return FootballMatchResult.Draw;
+    }
+
+    private static PlayerMatchOutcome ToLocalPlayerOutcome(FootballMatchResult result)
+    {
+        return result switch
+        {
+            FootballMatchResult.LeftWon => PlayerMatchOutcome.Victory,
+            FootballMatchResult.RightWon => PlayerMatchOutcome.Defeat,
+            _ => PlayerMatchOutcome.Draw
+        };
     }
 }

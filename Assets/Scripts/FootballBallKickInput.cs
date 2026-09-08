@@ -10,6 +10,7 @@ public sealed class FootballBallKickInput : MonoBehaviour
     [SerializeField] private FootballPlayerController _controller;
     [SerializeField] private FootballBallKicker _kicker;
     [SerializeField] private FootballBallBicycleKicker _bicycleKicker;
+    [SerializeField] private FootballShotCharge _shotCharge;
 
     private FootballInput _input;
 
@@ -35,7 +36,9 @@ public sealed class FootballBallKickInput : MonoBehaviour
             ApplyInputRestrictions(_controller.ControlSource, _controller.ControlDevice);
         }
 
+        _input.Ball.Kick.started += OnKick;
         _input.Ball.Kick.performed += OnKick;
+        _input.Ball.Kick.canceled += OnKick;
         _input.Ball.Enable();
     }
 
@@ -47,7 +50,10 @@ public sealed class FootballBallKickInput : MonoBehaviour
         if (_input == null)
             return;
 
+        _input.Ball.Kick.started -= OnKick;
         _input.Ball.Kick.performed -= OnKick;
+        _input.Ball.Kick.canceled -= OnKick;
+        _shotCharge?.CancelCharge(FootballShotChargeAction.Kick);
         _input.Ball.Disable();
     }
 
@@ -58,16 +64,42 @@ public sealed class FootballBallKickInput : MonoBehaviour
 
     private void OnKick(InputAction.CallbackContext context)
     {
-        if (!context.performed || _kicker == null)
-            return;
-
-        if (_bicycleKicker != null && _bicycleKicker.CanAttemptBicycleKick())
+        if (context.started)
         {
-            _bicycleKicker.TryBicycleKick();
+            _shotCharge?.BeginCharge(FootballShotChargeAction.Kick);
             return;
         }
 
-        _kicker.TryKick();
+        if (context.canceled)
+        {
+            _shotCharge?.CancelCharge(FootballShotChargeAction.Kick);
+            return;
+        }
+
+        if (!context.performed || _kicker == null)
+            return;
+
+        float normalizedCharge = 0f;
+        float powerMultiplier = 1f;
+
+        if (_shotCharge != null)
+        {
+            if (!_shotCharge.TryReleaseCharge(FootballShotChargeAction.Kick, out normalizedCharge))
+                return;
+
+            powerMultiplier = _shotCharge.EvaluatePowerMultiplier(normalizedCharge);
+            normalizedCharge = _shotCharge.EvaluateNormalizedCharge(normalizedCharge);
+        }
+
+        bool isLob = _controller != null && FootballBallKicker.IsLobDirection(_controller.MoveInput);
+
+        if (!isLob && _bicycleKicker != null && _bicycleKicker.CanAttemptBicycleKick())
+        {
+            _bicycleKicker.TryBicycleKick(powerMultiplier);
+            return;
+        }
+
+        _kicker.TryKick(normalizedCharge, isLob);
     }
 
     private void OnInputAssigned(FootballPlayerControlSource source, InputDevice device)
@@ -86,6 +118,9 @@ public sealed class FootballBallKickInput : MonoBehaviour
 
         if (_bicycleKicker == null)
             _bicycleKicker = GetComponent<FootballBallBicycleKicker>();
+
+        if (_shotCharge == null)
+            _shotCharge = GetComponentInChildren<FootballShotCharge>(true);
     }
 
     private void EnsureInput()

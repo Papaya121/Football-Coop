@@ -7,6 +7,7 @@ public sealed class FootballScoreController : MonoBehaviour
     private const int GoalZoneCount = 2;
 
     [SerializeField] private FootballMatchController _matchController;
+    [SerializeField] private FootballPlayerJoinManager _joinManager;
     [SerializeField] private FootballGoalZone[] _goalZones = new FootballGoalZone[GoalZoneCount];
     [SerializeField] private FootballScoreHudView _hudView;
     [SerializeField, Min(0f)] private float _scoreLockSeconds = 0.5f;
@@ -19,6 +20,12 @@ public sealed class FootballScoreController : MonoBehaviour
 
     public int LeftScore => _score.Left;
     public int RightScore => _score.Right;
+
+    private void Awake()
+    {
+        if (_joinManager == null)
+            _joinManager = FindAnyObjectByType<FootballPlayerJoinManager>();
+    }
 
     private void OnEnable()
     {
@@ -68,6 +75,17 @@ public sealed class FootballScoreController : MonoBehaviour
         RefreshHud();
         FootballSoundPlayer.TryPlay(FootballSoundIds.Goal, ball.transform.position);
         GoalScored?.Invoke(scoringSide, _score.Left, _score.Right);
+
+        if (!LocalPlayerSetupSession.IsTutorial)
+        {
+            bool ownGoal = TryGetLastTouchSide(ball, out FootballTeamSide touchSide) &&
+                touchSide == goalZone.DefendingSide;
+            FootballAnalytics.Goal(
+                scoringSide == FootballTeamSide.Left,
+                ball.LastTouchKickType,
+                ownGoal
+            );
+        }
     }
 
     private bool CanRegisterGoal(FootballGoalZone goalZone, FootballBall ball)
@@ -85,5 +103,26 @@ public sealed class FootballScoreController : MonoBehaviour
     {
         if (_hudView != null)
             _hudView.ShowScore(_score.Left, _score.Right);
+    }
+
+    private bool TryGetLastTouchSide(FootballBall ball, out FootballTeamSide side)
+    {
+        if (_joinManager != null && ball != null && ball.LastTouchPlayer != null)
+        {
+            if (_joinManager.GetPlayer(0) == ball.LastTouchPlayer)
+            {
+                side = FootballTeamSide.Left;
+                return true;
+            }
+
+            if (_joinManager.GetPlayer(1) == ball.LastTouchPlayer)
+            {
+                side = FootballTeamSide.Right;
+                return true;
+            }
+        }
+
+        side = default;
+        return false;
     }
 }

@@ -13,6 +13,11 @@ public sealed class GameParameterSlider : MonoBehaviour
     [SerializeField] private TMP_Text _valueText;
     [SerializeField] private string _valueFormat = DefaultValueFormat;
 
+    [Header("Slider range")]
+    [SerializeField] private bool _useCustomRange;
+    [SerializeField] private float _minimumValue;
+    [SerializeField] private float _maximumValue = 1f;
+
     public GameParameterId Parameter => _parameter;
     public string ParameterKey => GameParameterDefinitions.GetKey(_parameter);
     public float Value => _slider != null ? _slider.value : GameParameterSessionValues.GetValue(_parameter);
@@ -21,6 +26,8 @@ public sealed class GameParameterSlider : MonoBehaviour
     {
         _slider = GetComponentInChildren<Slider>(true);
         _valueText = GetComponentInChildren<TMP_Text>(true);
+        CopyParameterRange();
+        ConfigureSliderRange();
     }
 
     private void Awake()
@@ -46,6 +53,9 @@ public sealed class GameParameterSlider : MonoBehaviour
 
     private void OnValidate()
     {
+        if (!_useCustomRange)
+            CopyParameterRange();
+
         ConfigureSliderRange();
 
         if (_slider != null)
@@ -79,8 +89,24 @@ public sealed class GameParameterSlider : MonoBehaviour
         if (_slider == null)
             return;
 
-        _slider.minValue = GameParameterDefinitions.GetMinValue(_parameter);
-        _slider.maxValue = GameParameterDefinitions.GetMaxValue(_parameter);
+        float minimum = _useCustomRange
+            ? _minimumValue
+            : GameParameterDefinitions.GetMinValue(_parameter);
+        float maximum = _useCustomRange
+            ? _maximumValue
+            : GameParameterDefinitions.GetMaxValue(_parameter);
+
+        if (maximum < minimum)
+            maximum = minimum;
+
+        _slider.minValue = minimum;
+        _slider.maxValue = maximum;
+    }
+
+    private void CopyParameterRange()
+    {
+        _minimumValue = GameParameterDefinitions.GetMinValue(_parameter);
+        _maximumValue = GameParameterDefinitions.GetMaxValue(_parameter);
     }
 
     private void RefreshText(float value)

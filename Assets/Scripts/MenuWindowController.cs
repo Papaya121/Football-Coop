@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,21 +12,54 @@ public sealed class MenuWindowController : MonoBehaviour
     private const string GameplaySceneName = "Gameplay";
     private const float StickJoinThreshold = 0.5f;
 
-    private GameObject _mainWindow;
-    private GameObject _localWindow;
-    private GameObject _multiplayerWindow;
-    private GameObject _matchmakingWindow;
-    private Button _startButton;
-    private TMP_Text _matchmakingStatusText;
+    [Header("Windows")]
+    [SerializeField] private GameObject _mainWindow;
+    [SerializeField] private GameObject _localWindow;
+    [SerializeField] private GameObject _multiplayerWindow;
+    [SerializeField] private GameObject _matchmakingWindow;
+    [SerializeField] private CanvasGroup _mainWindowGroup;
+    [SerializeField] private CanvasGroup _localWindowGroup;
+    [SerializeField] private CanvasGroup _multiplayerWindowGroup;
+    [SerializeField] private CanvasGroup _matchmakingWindowGroup;
+
+    [Header("Window Transition")]
+    [SerializeField, Min(0.01f)] private float _fadeOutDuration = 0.14f;
+    [SerializeField, Min(0.01f)] private float _fadeInDuration = 0.22f;
+
+    [Header("Main Window")]
+    [SerializeField] private Button _localGameButton;
+    [SerializeField] private Button _aiButton;
+    [SerializeField] private Button _onlineButton;
+    [SerializeField] private Button _tutorialButton;
+
+    [Header("Local Window")]
+    [SerializeField] private Button _localBackButton;
+    [SerializeField] private Button _startButton;
+    [SerializeField] private Transform _inputGroup;
+
+    [Header("Multiplayer Window")]
+    [SerializeField] private Button _multiplayerBackButton;
+    [SerializeField] private Button _matchmakingButton;
+
+    [Header("Matchmaking Window")]
+    [SerializeField] private Button _matchmakingBackButton;
+    [SerializeField] private TMP_Text _matchmakingStatusText;
+
     private TMP_Text[] _deviceLabels;
+    private readonly Dictionary<GameObject, CanvasGroup> _windowGroupCache = new(4);
+    private GameObject[] _windows;
+    private Tween _windowTransition;
+    private GameObject _visibleWindow;
     private bool _isLocalSetupOpen;
     private FootballNetworkManager _networkManager;
 
     private void Awake()
     {
-        ResolveView();
+        ValidateReferences();
+        CacheViewData();
         BindButtons();
-        ShowMainWindow();
+        _isLocalSetupOpen = false;
+        ShowOnlyImmediate(_mainWindow);
     }
 
     private void OnEnable()
@@ -38,6 +72,8 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void OnDisable()
     {
+        _windowTransition?.Kill();
+        _windowTransition = null;
         LocalPlayerSetupSession.Changed -= RefreshLocalSetup;
         UnsubscribeFromNetworkEvents();
     }
@@ -51,54 +87,45 @@ public sealed class MenuWindowController : MonoBehaviour
         TryJoinGamepads();
     }
 
-    private void ResolveView()
+    private void CacheViewData()
     {
-        _mainWindow = FindDirectChild("Main Window").gameObject;
-        _localWindow = FindDirectChild("Local Window").gameObject;
-        _multiplayerWindow = FindDirectChild("Multiplayer Window").gameObject;
-        _matchmakingWindow = FindDirectChild("Matchmaking Window").gameObject;
+        _windows = new[] { _mainWindow, _localWindow, _multiplayerWindow, _matchmakingWindow };
+        _windowGroupCache.Clear();
+        _windowGroupCache.Add(_mainWindow, _mainWindowGroup);
+        _windowGroupCache.Add(_localWindow, _localWindowGroup);
+        _windowGroupCache.Add(_multiplayerWindow, _multiplayerWindowGroup);
+        _windowGroupCache.Add(_matchmakingWindow, _matchmakingWindowGroup);
 
-        _startButton = FindButton(_localWindow.transform, "Start Button");
-        Transform inputGroup = FindDescendant(_localWindow.transform, "Input Group");
         var labels = new List<TMP_Text>(LocalPlayerSetupSession.PlayerCapacity);
 
-        foreach (Transform slot in inputGroup)
+        foreach (Transform slot in _inputGroup)
         {
-            TMP_Text typeLabel = FindDescendant(slot, "Type Text")?.GetComponent<TMP_Text>();
+            TMP_Text typeLabel = slot.GetComponentInChildren<TMP_Text>(true);
             if (typeLabel != null)
                 labels.Add(typeLabel);
         }
 
         _deviceLabels = labels.ToArray();
-
-        Transform matchmakingButtons = FindDescendant(_matchmakingWindow.transform, "Buttons Group");
-        _matchmakingStatusText = FindDescendant(matchmakingButtons, "Input Text")?.GetComponent<TMP_Text>();
     }
 
     private void BindButtons()
     {
-        FindButton(_mainWindow.transform, "LocalGame Button").onClick.AddListener(OpenLocalSetup);
-        Button aiButton = FindOptionalButton(_mainWindow.transform, "AI Button");
+        _localGameButton.onClick.AddListener(OpenLocalSetup);
+        _aiButton.onClick.AddListener(StartAiGame);
+        _onlineButton.onClick.AddListener(OpenMultiplayer);
 
-        if (aiButton != null)
-            aiButton.onClick.AddListener(StartAiGame);
-
-        Button learningButton = FindOptionalButton(_mainWindow.transform, "Learning Button");
-
-        if (learningButton != null)
-            learningButton.onClick.AddListener(StartTutorial);
-
-        FindButton(_mainWindow.transform, "MultiplayerGame Button").onClick.AddListener(OpenMultiplayer);
-        FindButton(_mainWindow.transform, "Exit Button").onClick.AddListener(Quit);
-        FindButton(_localWindow.transform, "Back Button").onClick.AddListener(CancelLocalSetup);
+        if (_tutorialButton != null)
+            _tutorialButton.onClick.AddListener(StartTutorial);
+        _localBackButton.onClick.AddListener(CancelLocalSetup);
         _startButton.onClick.AddListener(StartLocalGame);
-        FindButton(_multiplayerWindow.transform, "Back Button").onClick.AddListener(ShowMainWindow);
-        FindButton(_multiplayerWindow.transform, "LocalGame Button").onClick.AddListener(StartMatchmaking);
-        FindButton(_matchmakingWindow.transform, "Back Button").onClick.AddListener(CancelMatchmaking);
+        _multiplayerBackButton.onClick.AddListener(BackToMain);
+        _matchmakingButton.onClick.AddListener(StartMatchmaking);
+        _matchmakingBackButton.onClick.AddListener(CancelMatchmaking);
     }
 
     private void OpenLocalSetup()
     {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonPlay);
         LocalPlayerSetupSession.Clear();
         ShowOnly(_localWindow);
         _isLocalSetupOpen = true;
@@ -106,6 +133,7 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void CancelLocalSetup()
     {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonBack);
         LocalPlayerSetupSession.Clear();
         ShowMainWindow();
     }
@@ -115,17 +143,20 @@ public sealed class MenuWindowController : MonoBehaviour
         if (!LocalPlayerSetupSession.IsReady)
             return;
 
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonStartLocal);
         LocalPlayerSetupSession.Confirm();
         SceneManager.LoadScene(GameplaySceneName);
     }
 
     private void StartAiGame()
     {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonAi);
         StartSinglePlayerGame(false);
     }
 
     private void StartTutorial()
     {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonTutorial);
         StartSinglePlayerGame(true);
     }
 
@@ -165,6 +196,12 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void OpenMultiplayer()
     {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonOnline);
+        ShowMultiplayer();
+    }
+
+    private void ShowMultiplayer()
+    {
         LocalPlayerSetupSession.Clear();
         ShowOnly(_multiplayerWindow);
     }
@@ -182,13 +219,21 @@ public sealed class MenuWindowController : MonoBehaviour
 
         ShowOnly(_matchmakingWindow);
         SetMatchmakingStatus("Подключение к серверу…");
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonStartOnline);
         _networkManager.FindMatch();
     }
 
     private void CancelMatchmaking()
     {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonCancelMatchmaking);
         _networkManager?.CancelMatchmaking();
-        OpenMultiplayer();
+        ShowMultiplayer();
+    }
+
+    private void BackToMain()
+    {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonBack);
+        ShowMainWindow();
     }
 
     private void ShowMainWindow()
@@ -199,10 +244,85 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void ShowOnly(GameObject window)
     {
-        _mainWindow.SetActive(window == _mainWindow);
-        _localWindow.SetActive(window == _localWindow);
-        _multiplayerWindow.SetActive(window == _multiplayerWindow);
-        _matchmakingWindow.SetActive(window == _matchmakingWindow);
+        if (_visibleWindow == window && (_windowTransition == null || !_windowTransition.IsActive()))
+            return;
+
+        GameObject outgoingWindow = _visibleWindow;
+        CanvasGroup outgoingGroup = outgoingWindow != null ? _windowGroupCache[outgoingWindow] : null;
+        CanvasGroup incomingGroup = window != null ? _windowGroupCache[window] : null;
+
+        _windowTransition?.Kill();
+        _windowTransition = null;
+
+        for (int i = 0; i < _windows.Length; i++)
+        {
+            GameObject cachedWindow = _windows[i];
+            if (cachedWindow == outgoingWindow || cachedWindow == window)
+                continue;
+
+            CanvasGroup cachedGroup = _windowGroupCache[cachedWindow];
+            SetWindowInteraction(cachedGroup, false);
+            cachedGroup.alpha = 0f;
+            cachedWindow.SetActive(false);
+        }
+
+        if (outgoingGroup != null)
+            SetWindowInteraction(outgoingGroup, false);
+
+        if (incomingGroup != null)
+        {
+            SetWindowInteraction(incomingGroup, false);
+            if (window != outgoingWindow)
+                incomingGroup.alpha = 0f;
+            window.SetActive(true);
+        }
+
+        _visibleWindow = window;
+        Sequence sequence = DOTween.Sequence().SetUpdate(true);
+
+        if (outgoingGroup != null && outgoingWindow != window)
+        {
+            if (outgoingGroup.alpha > 0.001f)
+                sequence.Append(outgoingGroup.DOFade(0f, _fadeOutDuration).SetEase(Ease.InCubic));
+
+            sequence.AppendCallback(() => outgoingWindow.SetActive(false));
+        }
+
+        if (incomingGroup != null)
+            sequence.Append(incomingGroup.DOFade(1f, _fadeInDuration).SetEase(Ease.OutCubic));
+
+        _windowTransition = sequence
+            .OnComplete(() =>
+            {
+                if (incomingGroup != null && _visibleWindow == window)
+                    SetWindowInteraction(incomingGroup, true);
+
+                _windowTransition = null;
+            })
+            .SetLink(gameObject, LinkBehaviour.KillOnDisable);
+    }
+
+    private void ShowOnlyImmediate(GameObject window)
+    {
+        _windowTransition?.Kill();
+        _windowTransition = null;
+        _visibleWindow = window;
+
+        for (int i = 0; i < _windows.Length; i++)
+        {
+            GameObject cachedWindow = _windows[i];
+            bool isVisible = cachedWindow == window;
+            CanvasGroup group = _windowGroupCache[cachedWindow];
+            group.alpha = isVisible ? 1f : 0f;
+            SetWindowInteraction(group, isVisible);
+            cachedWindow.SetActive(isVisible);
+        }
+    }
+
+    private static void SetWindowInteraction(CanvasGroup group, bool enabled)
+    {
+        group.interactable = enabled;
+        group.blocksRaycasts = enabled;
     }
 
     private void ResolveNetworkManager()
@@ -218,10 +338,10 @@ public sealed class MenuWindowController : MonoBehaviour
 
         _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
         _networkManager.MatchLoading -= HideMenuWindows;
-        _networkManager.ReturnedToMenu -= OpenMultiplayer;
+        _networkManager.ReturnedToMenu -= ShowMultiplayer;
         _networkManager.MatchmakingStatusChanged += SetMatchmakingStatus;
         _networkManager.MatchLoading += HideMenuWindows;
-        _networkManager.ReturnedToMenu += OpenMultiplayer;
+        _networkManager.ReturnedToMenu += ShowMultiplayer;
     }
 
     private void UnsubscribeFromNetworkEvents()
@@ -231,7 +351,7 @@ public sealed class MenuWindowController : MonoBehaviour
 
         _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
         _networkManager.MatchLoading -= HideMenuWindows;
-        _networkManager.ReturnedToMenu -= OpenMultiplayer;
+        _networkManager.ReturnedToMenu -= ShowMultiplayer;
     }
 
     private void SetMatchmakingStatus(string status)
@@ -308,21 +428,67 @@ public sealed class MenuWindowController : MonoBehaviour
         }
     }
 
-    private Transform FindDirectChild(string childName)
+    private void ValidateReferences()
     {
-        Transform child = transform.Find(childName);
-        if (child == null)
-            throw new MissingReferenceException($"Menu window '{childName}' is missing under {name}.");
-        return child;
+        if (_mainWindow == null || _localWindow == null || _multiplayerWindow == null ||
+            _matchmakingWindow == null || _mainWindowGroup == null || _localWindowGroup == null ||
+            _multiplayerWindowGroup == null || _matchmakingWindowGroup == null ||
+            _localGameButton == null || _aiButton == null ||
+            _onlineButton == null || _localBackButton == null || _startButton == null ||
+            _inputGroup == null || _multiplayerBackButton == null || _matchmakingButton == null ||
+            _matchmakingBackButton == null || _matchmakingStatusText == null)
+            throw new MissingReferenceException(
+                $"{nameof(MenuWindowController)} on '{name}' has missing UI references. " +
+                "Use Reset in the component context menu to auto-wire empty fields.");
     }
 
-    private static Button FindButton(Transform root, string buttonName)
+#if UNITY_EDITOR
+    private void Reset()
     {
-        Transform target = FindDescendant(root, buttonName);
-        Button button = target != null ? target.GetComponent<Button>() : null;
-        if (button == null)
-            throw new MissingReferenceException($"Button '{buttonName}' is missing under {root.name}.");
-        return button;
+        AutoWireReferences();
+    }
+
+    private void OnValidate()
+    {
+        _fadeOutDuration = Mathf.Max(0.01f, _fadeOutDuration);
+        _fadeInDuration = Mathf.Max(0.01f, _fadeInDuration);
+
+        if (!Application.isPlaying)
+            AutoWireReferences();
+    }
+
+    private void AutoWireReferences()
+    {
+        _mainWindow ??= transform.Find("Main Window")?.gameObject;
+        _localWindow ??= transform.Find("Local Window")?.gameObject;
+        _multiplayerWindow ??= transform.Find("Multiplayer Window")?.gameObject;
+        _matchmakingWindow ??= transform.Find("Matchmaking Window")?.gameObject;
+        _mainWindowGroup ??= _mainWindow != null ? _mainWindow.GetComponent<CanvasGroup>() : null;
+        _localWindowGroup ??= _localWindow != null ? _localWindow.GetComponent<CanvasGroup>() : null;
+        _multiplayerWindowGroup ??= _multiplayerWindow != null ? _multiplayerWindow.GetComponent<CanvasGroup>() : null;
+        _matchmakingWindowGroup ??= _matchmakingWindow != null ? _matchmakingWindow.GetComponent<CanvasGroup>() : null;
+
+        Transform gameButtons = _mainWindow != null
+            ? FindDescendant(_mainWindow.transform, "Game Buttons")
+            : null;
+
+        _localGameButton ??= FindOptionalButton(gameButtons, "LocalGame Button");
+        _aiButton ??= FindOptionalButton(gameButtons, "AI Button");
+        _onlineButton ??= FindOptionalButton(gameButtons, "Online Button");
+        _tutorialButton ??= FindOptionalButton(_mainWindow?.transform, "Learning Button");
+        _localBackButton ??= FindOptionalButton(_localWindow?.transform, "Back Button");
+        _startButton ??= FindOptionalButton(_localWindow?.transform, "Start Button");
+        _inputGroup ??= FindDescendant(_localWindow?.transform, "Input Group");
+        _multiplayerBackButton ??= FindOptionalButton(_multiplayerWindow?.transform, "Back Button");
+        _matchmakingButton ??= FindOptionalButton(_multiplayerWindow?.transform, "LocalGame Button");
+        _matchmakingBackButton ??= FindOptionalButton(_matchmakingWindow?.transform, "Back Button");
+
+        if (_matchmakingStatusText == null)
+        {
+            Transform buttons = FindDescendant(_matchmakingWindow?.transform, "Buttons Group");
+            Transform status = FindDescendant(buttons, "Input Text");
+            _matchmakingStatusText = status != null ? status.GetComponent<TMP_Text>() : null;
+        }
     }
 
     private static Button FindOptionalButton(Transform root, string buttonName)
@@ -333,6 +499,9 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private static Transform FindDescendant(Transform root, string objectName)
     {
+        if (root == null)
+            return null;
+
         foreach (Transform child in root)
         {
             if (child.name == objectName)
@@ -345,9 +514,11 @@ public sealed class MenuWindowController : MonoBehaviour
 
         return null;
     }
+#endif
 
     private static void Quit()
     {
+        FootballAnalytics.MenuButton(FootballAnalytics.PressButtonExit);
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

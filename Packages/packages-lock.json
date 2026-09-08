@@ -1,5 +1,19 @@
 {
   "dependencies": {
+    "com.gameanalytics.sdk": {
+      "version": "https://github.com/GameAnalytics/GA-SDK-UNITY.git#8.1.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "5ce69dd9d0f63726c134c9eca1572f9aef01625d"
+    },
+    "com.google.external-dependency-manager": {
+      "version": "https://github.com/googlesamples/unity-jar-resolver.git?path=upm#v1.2.188",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "32c34224fd3f34c813c97c69508d2a3930105dc7"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,

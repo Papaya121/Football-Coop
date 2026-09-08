@@ -38,6 +38,8 @@ public sealed class FootballBall : MonoBehaviour
 
     public Vector3 LinearVelocity => _rigidbody.linearVelocity;
     public bool CanReceivePassiveContact => Time.time >= _passiveContactSuppressedUntil;
+    public FootballPlayerController LastTouchPlayer { get; private set; }
+    public FootballGoalKickType LastTouchKickType { get; private set; }
 
     private void Awake()
     {
@@ -124,6 +126,12 @@ public sealed class FootballBall : MonoBehaviour
         PlayStrongKickVfx();
     }
 
+    public void RecordTouch(FootballPlayerController player, FootballGoalKickType kickType)
+    {
+        LastTouchPlayer = player;
+        LastTouchKickType = kickType;
+    }
+
     public void Respawn(Vector3 position)
     {
         Respawn(position, Quaternion.identity);
@@ -134,6 +142,8 @@ public sealed class FootballBall : MonoBehaviour
         ResolveReferences();
 
         _passiveContactSuppressedUntil = 0f;
+        LastTouchPlayer = null;
+        LastTouchKickType = FootballGoalKickType.Unknown;
         _rigidbody.linearVelocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;
         _rigidbody.position = ToGameplayPlane(position);
@@ -225,6 +235,7 @@ public sealed class FootballBall : MonoBehaviour
         _gravity = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.BallGravity));
         _bounce = Mathf.Clamp01(GameParameterSessionValues.GetValue(GameParameterId.BallBounce));
         _scaleMultiplier = Mathf.Max(MinimumScaleMultiplier, GameParameterSessionValues.GetValue(GameParameterId.BallScale));
+        _maxLinearSpeed = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.BallMaxSpeed));
 
         ApplyBounce();
         ApplyScale();

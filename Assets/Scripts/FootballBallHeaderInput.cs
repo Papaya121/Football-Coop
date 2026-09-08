@@ -8,6 +8,7 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
 {
     [SerializeField] private FootballPlayerController _controller;
     [SerializeField] private FootballBallHeader _header;
+    [SerializeField] private FootballShotCharge _shotCharge;
 
     private FootballInput _input;
 
@@ -33,7 +34,9 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
             ApplyInputRestrictions(_controller.ControlSource, _controller.ControlDevice);
         }
 
+        _input.Ball.Header.started += OnHeader;
         _input.Ball.Header.performed += OnHeader;
+        _input.Ball.Header.canceled += OnHeader;
         _input.Ball.Enable();
     }
 
@@ -45,7 +48,10 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
         if (_input == null)
             return;
 
+        _input.Ball.Header.started -= OnHeader;
         _input.Ball.Header.performed -= OnHeader;
+        _input.Ball.Header.canceled -= OnHeader;
+        _shotCharge?.CancelCharge(FootballShotChargeAction.Header);
         _input.Ball.Disable();
     }
 
@@ -56,10 +62,32 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
 
     private void OnHeader(InputAction.CallbackContext context)
     {
+        if (context.started)
+        {
+            _shotCharge?.BeginCharge(FootballShotChargeAction.Header);
+            return;
+        }
+
+        if (context.canceled)
+        {
+            _shotCharge?.CancelCharge(FootballShotChargeAction.Header);
+            return;
+        }
+
         if (!context.performed || _header == null)
             return;
 
-        _header.TryHeader();
+        float powerMultiplier = 1f;
+
+        if (_shotCharge != null)
+        {
+            if (!_shotCharge.TryReleaseCharge(FootballShotChargeAction.Header, out float normalizedCharge))
+                return;
+
+            powerMultiplier = _shotCharge.EvaluatePowerMultiplier(normalizedCharge);
+        }
+
+        _header.TryHeader(powerMultiplier);
     }
 
     private void OnInputAssigned(FootballPlayerControlSource source, InputDevice device)
@@ -75,6 +103,9 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
 
         if (_header == null)
             _header = GetComponent<FootballBallHeader>();
+
+        if (_shotCharge == null)
+            _shotCharge = GetComponentInChildren<FootballShotCharge>(true);
     }
 
     private void EnsureInput()

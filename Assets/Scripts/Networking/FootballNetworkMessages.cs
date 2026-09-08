@@ -56,6 +56,8 @@ public struct FootballMatchStateMessage : NetworkMessage
     public int LeftScore;
     public int RightScore;
     public FootballTeamSide LastScoringSide;
+    public FootballGoalKickType LastGoalKickType;
+    public bool LastGoalWasOwnGoal;
     public FootballMatchResult Result;
     public uint EventSequence;
     public FootballMatchEvent Event;

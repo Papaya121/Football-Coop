@@ -2,12 +2,15 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(100)]
 [DisallowMultipleComponent]
 public sealed class FootballTutorialController : MonoBehaviour
 {
+    private const string MenuSceneName = "Menu";
     private const float AnimationDuration = 0.22f;
+    private const float PanelScale = 0.5f;
     private const float MinimumInputDelay = 0.2f;
     private const float MinimumGameplayTimeBetweenTips = 2.5f;
 
@@ -24,6 +27,7 @@ public sealed class FootballTutorialController : MonoBehaviour
     private Coroutine _sequence;
     private int _currentStepIndex = -1;
     private bool _gameIsPaused;
+    private bool _analyticsFinished;
     private float _timeScaleBeforePause = 1f;
 
     private readonly TutorialStep[] _steps =
@@ -77,13 +81,16 @@ public sealed class FootballTutorialController : MonoBehaviour
 
         _canvasGroup.alpha = 0f;
         _canvasGroup.blocksRaycasts = false;
-        _panel.localScale = Vector3.one * 0.82f;
+        _panel.localScale = Vector3.one * (PanelScale * 0.82f);
     }
 
     private void Start()
     {
         if (LocalPlayerSetupSession.IsTutorial)
+        {
+            FootballAnalytics.TutorialStarted();
             _sequence = StartCoroutine(RunTutorial());
+        }
     }
 
     private void OnDisable()
@@ -113,7 +120,7 @@ public sealed class FootballTutorialController : MonoBehaviour
             {
                 if (WasSkipPressed())
                 {
-                    FinishTutorial();
+                    FinishTutorial(true);
                     yield break;
                 }
 
@@ -130,7 +137,7 @@ public sealed class FootballTutorialController : MonoBehaviour
                 if (WasSkipPressed())
                 {
                     yield return AnimateWindow(false);
-                    FinishTutorial();
+                    FinishTutorial(true);
                     yield break;
                 }
 
@@ -149,11 +156,17 @@ public sealed class FootballTutorialController : MonoBehaviour
             }
         }
 
-        FinishTutorial();
+        FinishTutorial(false);
     }
 
-    private void FinishTutorial()
+    private void FinishTutorial(bool skipped)
     {
+        if (!_analyticsFinished)
+        {
+            _analyticsFinished = true;
+            FootballAnalytics.TutorialFinished(skipped);
+        }
+
         ResumeGame();
 
         if (_player != null)
@@ -162,6 +175,28 @@ public sealed class FootballTutorialController : MonoBehaviour
         _sequence = null;
         _currentStepIndex = -1;
         gameObject.SetActive(false);
+    }
+
+    public void ExitToMenu()
+    {
+        if (!LocalPlayerSetupSession.IsTutorial)
+            return;
+
+        if (!_analyticsFinished)
+        {
+            _analyticsFinished = true;
+            FootballAnalytics.TutorialFinished(true);
+        }
+
+        if (_sequence != null)
+        {
+            StopCoroutine(_sequence);
+            _sequence = null;
+        }
+
+        ResumeGame();
+        LocalPlayerSetupSession.Clear();
+        SceneManager.LoadScene(MenuSceneName);
     }
 
     private void PauseGame()
@@ -191,7 +226,7 @@ public sealed class FootballTutorialController : MonoBehaviour
         float startAlpha = _canvasGroup.alpha;
         float targetAlpha = showing ? 1f : 0f;
         Vector3 startScale = _panel.localScale;
-        Vector3 targetScale = Vector3.one * (showing ? 1f : 0.88f);
+        Vector3 targetScale = Vector3.one * PanelScale * (showing ? 1f : 0.88f);
         float elapsed = 0f;
 
         while (elapsed < AnimationDuration)
@@ -321,7 +356,7 @@ public sealed class FootballTutorialController : MonoBehaviour
             return action switch
             {
                 TutorialAction.Move => keyboard.leftArrowKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame,
-                TutorialAction.Jump => keyboard.upArrowKey.wasPressedThisFrame,
+                TutorialAction.Jump => keyboard.rightShiftKey.wasPressedThisFrame,
                 TutorialAction.Kick => keyboard.leftBracketKey.wasPressedThisFrame,
                 TutorialAction.Header => keyboard.rightBracketKey.wasPressedThisFrame,
                 _ => false
@@ -331,7 +366,7 @@ public sealed class FootballTutorialController : MonoBehaviour
         return action switch
         {
             TutorialAction.Move => keyboard.aKey.wasPressedThisFrame || keyboard.dKey.wasPressedThisFrame,
-            TutorialAction.Jump => keyboard.spaceKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame,
+            TutorialAction.Jump => keyboard.spaceKey.wasPressedThisFrame,
             TutorialAction.Kick => keyboard.kKey.wasPressedThisFrame,
             TutorialAction.Header => keyboard.jKey.wasPressedThisFrame,
             _ => false
@@ -420,9 +455,9 @@ public sealed class FootballTutorialController : MonoBehaviour
 
     private string GetJumpLabel(FootballPlayerControlSource source) => source switch
     {
-        FootballPlayerControlSource.ArrowKeyboard => "↑",
+        FootballPlayerControlSource.ArrowKeyboard => "RIGHT SHIFT",
         FootballPlayerControlSource.Gamepad => IsPlayStationGamepad() ? "✕" : "A",
-        _ => "SPACE / W"
+        _ => "SPACE"
     };
 
     private string GetKickLabel(FootballPlayerControlSource source) => source switch

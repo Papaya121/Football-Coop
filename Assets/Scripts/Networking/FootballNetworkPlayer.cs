@@ -17,6 +17,7 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     [SerializeField] private FootballPlayerAnimator _animator;
     [SerializeField] private FootballBallKickInput _localKickInput;
     [SerializeField] private FootballBallHeaderInput _localHeaderInput;
+    [SerializeField] private FootballShotCharge _shotCharge;
     [SerializeField] private Renderer[] _teamRenderers;
     [SerializeField] private Material _leftTeamMaterial;
     [SerializeField] private Material _rightTeamMaterial;
@@ -35,6 +36,8 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     private float _nextServerDiagnosticTime;
     private uint _serverMoveCommandCount;
     private bool _serverGameplayEnabled;
+
+    public FootballTeamSide TeamSide => _teamSide;
 
     private void Awake()
     {
@@ -76,14 +79,19 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
             $"scene={gameObject.scene.name}; rb={DescribeRigidbody()}; sync={DescribeNetworkTransform()}; " +
             $"visuals={DescribeTeamVisuals()}"
         );
+        FootballNetworkManager.Instance?.BindClientPlayer(_controller);
     }
 
     public override void OnStartLocalPlayer()
     {
         _input = new FootballInput();
         _input.Player.Jump.performed += OnJump;
+        _input.Ball.Kick.started += OnKick;
         _input.Ball.Kick.performed += OnKick;
+        _input.Ball.Kick.canceled += OnKick;
+        _input.Ball.Header.started += OnHeader;
         _input.Ball.Header.performed += OnHeader;
+        _input.Ball.Header.canceled += OnHeader;
         _input.Enable();
         FootballNetworkDiagnostics.Write(
             "INPUT-CLIENT",
@@ -98,8 +106,13 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
             return;
 
         _input.Player.Jump.performed -= OnJump;
+        _input.Ball.Kick.started -= OnKick;
         _input.Ball.Kick.performed -= OnKick;
+        _input.Ball.Kick.canceled -= OnKick;
+        _input.Ball.Header.started -= OnHeader;
         _input.Ball.Header.performed -= OnHeader;
+        _input.Ball.Header.canceled -= OnHeader;
+        _shotCharge?.CancelCharge();
         _input.Dispose();
         _input = null;
     }
@@ -196,29 +209,31 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     }
 
     [Command]
-    private void CmdKick()
+    private void CmdKick(float normalizedCharge, bool isLob)
     {
         if (!_serverGameplayEnabled)
             return;
 
-        if (_bicycleKicker != null && _bicycleKicker.CanAttemptBicycleKick())
+        float powerMultiplier = GetPowerMultiplier(normalizedCharge);
+
+        if (!isLob && _bicycleKicker != null && _bicycleKicker.CanAttemptBicycleKick())
         {
-            if (_bicycleKicker.TryBicycleKick())
+            if (_bicycleKicker.TryBicycleKick(powerMultiplier))
                 RpcPlayAction(FootballNetworkAction.BicycleKick);
             return;
         }
 
-        if (_kicker != null && _kicker.TryKick())
+        if (_kicker != null && _kicker.TryKick(GetNormalizedCharge(normalizedCharge), isLob))
             RpcPlayAction(FootballNetworkAction.Kick);
     }
 
     [Command]
-    private void CmdHeader()
+    private void CmdHeader(float normalizedCharge)
     {
         if (!_serverGameplayEnabled)
             return;
 
-        if (_header != null && _header.TryHeader())
+        if (_header != null && _header.TryHeader(GetPowerMultiplier(normalizedCharge)))
             RpcPlayAction(FootballNetworkAction.Header);
     }
 
@@ -278,14 +293,69 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
     private void OnKick(InputAction.CallbackContext context)
     {
-        if (context.performed)
-            CmdKick();
+        if (context.started)
+        {
+            _shotCharge?.BeginCharge(FootballShotChargeAction.Kick);
+            return;
+        }
+
+        if (context.canceled)
+        {
+            _shotCharge?.CancelCharge(FootballShotChargeAction.Kick);
+            return;
+        }
+
+        if (!context.performed)
+            return;
+
+        float normalizedCharge = 0f;
+
+        if (_shotCharge != null &&
+            !_shotCharge.TryReleaseCharge(FootballShotChargeAction.Kick, out normalizedCharge))
+            return;
+
+        bool isLob = FootballBallKicker.IsLobDirection(_input.Player.Move.ReadValue<Vector2>());
+        CmdKick(normalizedCharge, isLob);
     }
 
     private void OnHeader(InputAction.CallbackContext context)
     {
-        if (context.performed)
-            CmdHeader();
+        if (context.started)
+        {
+            _shotCharge?.BeginCharge(FootballShotChargeAction.Header);
+            return;
+        }
+
+        if (context.canceled)
+        {
+            _shotCharge?.CancelCharge(FootballShotChargeAction.Header);
+            return;
+        }
+
+        if (!context.performed)
+            return;
+
+        float normalizedCharge = 0f;
+
+        if (_shotCharge != null &&
+            !_shotCharge.TryReleaseCharge(FootballShotChargeAction.Header, out normalizedCharge))
+            return;
+
+        CmdHeader(normalizedCharge);
+    }
+
+    private float GetPowerMultiplier(float normalizedCharge)
+    {
+        return _shotCharge != null
+            ? _shotCharge.EvaluatePowerMultiplier(Mathf.Clamp01(normalizedCharge))
+            : 1f;
+    }
+
+    private float GetNormalizedCharge(float normalizedCharge)
+    {
+        return _shotCharge != null
+            ? _shotCharge.EvaluateNormalizedCharge(normalizedCharge)
+            : Mathf.Clamp01(normalizedCharge);
     }
 
     private void CapturePresentationState()
@@ -402,6 +472,8 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
             _localKickInput = GetComponent<FootballBallKickInput>();
         if (_localHeaderInput == null)
             _localHeaderInput = GetComponent<FootballBallHeaderInput>();
+        if (_shotCharge == null)
+            _shotCharge = GetComponentInChildren<FootballShotCharge>(true);
     }
 
 

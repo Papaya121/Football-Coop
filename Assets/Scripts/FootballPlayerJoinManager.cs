@@ -294,6 +294,7 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
 
     private static void RestartCurrentScene()
     {
+        FootballAnalytics.AbortMatch();
         Scene activeScene = SceneManager.GetActiveScene();
 
 #if UNITY_EDITOR

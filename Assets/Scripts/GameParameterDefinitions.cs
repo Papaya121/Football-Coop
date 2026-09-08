@@ -6,7 +6,10 @@ public enum GameParameterId
     PlayerGravity,
     PlayerJump,
     PlayerScale,
-    PlayerAirAcceleration
+    PlayerAirAcceleration,
+    BallKickMinForce,
+    BallMaxSpeed,
+    BallKickMaxForce
 }
 
 public static class GameParameterDefinitions
@@ -18,6 +21,9 @@ public static class GameParameterDefinitions
     public const string PlayerJumpKey = "player_jump";
     public const string PlayerScaleKey = "player_scale";
     public const string PlayerAirAccelerationKey = "player_air_acceleration";
+    public const string BallKickMinForceKey = "ball_kick_min_force";
+    public const string BallMaxSpeedKey = "ball_max_speed";
+    public const string BallKickMaxForceKey = "ball_kick_max_force";
 
     public const float DefaultBallGravity = 11.5f;
     public const float DefaultBallBounce = 0.8f;
@@ -26,6 +32,9 @@ public static class GameParameterDefinitions
     public const float DefaultPlayerJump = 7f;
     public const float DefaultPlayerScale = 0.8f;
     public const float DefaultPlayerAirAcceleration = 12f;
+    public const float DefaultBallKickMinForce = 15f;
+    public const float DefaultBallMaxSpeed = 27f;
+    public const float DefaultBallKickMaxForce = 27f;
 
     public const float MinBallGravity = 0f;
     public const float MaxBallGravity = 20f;
@@ -41,6 +50,10 @@ public static class GameParameterDefinitions
     public const float MaxPlayerScale = 2f;
     public const float MinPlayerAirAcceleration = 0f;
     public const float MaxPlayerAirAcceleration = 40f;
+    public const float MinBallKickForce = 0f;
+    public const float MaxBallKickForce = 40f;
+    public const float MinBallMaxSpeed = 1f;
+    public const float MaxBallMaxSpeed = 40f;
 
     public static string GetKey(GameParameterId parameter)
     {
@@ -60,6 +73,12 @@ public static class GameParameterDefinitions
                 return PlayerScaleKey;
             case GameParameterId.PlayerAirAcceleration:
                 return PlayerAirAccelerationKey;
+            case GameParameterId.BallKickMinForce:
+                return BallKickMinForceKey;
+            case GameParameterId.BallMaxSpeed:
+                return BallMaxSpeedKey;
+            case GameParameterId.BallKickMaxForce:
+                return BallKickMaxForceKey;
             default:
                 return BallGravityKey;
         }
@@ -83,6 +102,12 @@ public static class GameParameterDefinitions
                 return DefaultPlayerScale;
             case GameParameterId.PlayerAirAcceleration:
                 return DefaultPlayerAirAcceleration;
+            case GameParameterId.BallKickMinForce:
+                return DefaultBallKickMinForce;
+            case GameParameterId.BallMaxSpeed:
+                return DefaultBallMaxSpeed;
+            case GameParameterId.BallKickMaxForce:
+                return DefaultBallKickMaxForce;
             default:
                 return DefaultBallGravity;
         }
@@ -106,6 +131,12 @@ public static class GameParameterDefinitions
                 return DefaultPlayerScale;
             case PlayerAirAccelerationKey:
                 return DefaultPlayerAirAcceleration;
+            case BallKickMinForceKey:
+                return DefaultBallKickMinForce;
+            case BallMaxSpeedKey:
+                return DefaultBallMaxSpeed;
+            case BallKickMaxForceKey:
+                return DefaultBallKickMaxForce;
             default:
                 return 0f;
         }
@@ -129,6 +160,11 @@ public static class GameParameterDefinitions
                 return MinPlayerScale;
             case GameParameterId.PlayerAirAcceleration:
                 return MinPlayerAirAcceleration;
+            case GameParameterId.BallKickMinForce:
+            case GameParameterId.BallKickMaxForce:
+                return MinBallKickForce;
+            case GameParameterId.BallMaxSpeed:
+                return MinBallMaxSpeed;
             default:
                 return 0f;
         }
@@ -152,6 +188,11 @@ public static class GameParameterDefinitions
                 return MaxPlayerScale;
             case GameParameterId.PlayerAirAcceleration:
                 return MaxPlayerAirAcceleration;
+            case GameParameterId.BallKickMinForce:
+            case GameParameterId.BallKickMaxForce:
+                return MaxBallKickForce;
+            case GameParameterId.BallMaxSpeed:
+                return MaxBallMaxSpeed;
             default:
                 return 1f;
         }
@@ -159,7 +200,12 @@ public static class GameParameterDefinitions
 
     public static bool IsBallParameter(string key)
     {
-        return key == BallGravityKey || key == BallBounceKey || key == BallScaleKey;
+        return key == BallGravityKey ||
+            key == BallBounceKey ||
+            key == BallScaleKey ||
+            key == BallKickMinForceKey ||
+            key == BallKickMaxForceKey ||
+            key == BallMaxSpeedKey;
     }
 
     public static bool IsPlayerParameter(string key)

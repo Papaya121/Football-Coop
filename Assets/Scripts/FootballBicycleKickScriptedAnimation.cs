@@ -58,13 +58,15 @@ public sealed class FootballBicycleKickScriptedAnimation : MonoBehaviour
     {
         ResolveReferences();
 
+        if (_isSpinning)
+            return;
+
         if (_playKickAnimation && _playerAnimator != null)
             _playerAnimator.TriggerKickAnimation();
 
         if (_rotationRoot == null)
             return;
 
-        StopSpin();
         _spinCoroutine = StartCoroutine(Spin());
     }
 

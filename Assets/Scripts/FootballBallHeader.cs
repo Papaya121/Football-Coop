@@ -38,7 +38,7 @@ public sealed class FootballBallHeader : MonoBehaviour
         EnsureProfile();
     }
 
-    public bool TryHeader()
+    public bool TryHeader(float powerMultiplier = 1f)
     {
         EnsureProfile();
         HeaderAttempted?.Invoke();
@@ -49,9 +49,15 @@ public sealed class FootballBallHeader : MonoBehaviour
         if (!TryFindBall(out FootballBall ball))
             return false;
 
-        Vector3 linearVelocity = _headerProfile.CreateLinearVelocity(_controller.FacingDirection, _rigidbody.linearVelocity, ball.LinearVelocity);
+        Vector3 linearVelocity = _headerProfile.CreateLinearVelocity(
+            _controller.FacingDirection,
+            _rigidbody.linearVelocity,
+            ball.LinearVelocity,
+            powerMultiplier
+        );
         Vector3 angularVelocity = _headerProfile.CreateAngularVelocity(linearVelocity);
 
+        ball.RecordTouch(_controller, FootballGoalKickType.Head);
         ball.ApplyHeader(linearVelocity, angularVelocity, _headerProfile.ReceptionSuppressionTime);
         FootballSoundPlayer.TryPlay(FootballSoundIds.Kick, ball.transform.position);
         _nextHeaderTime = Time.time + _headerProfile.Cooldown;

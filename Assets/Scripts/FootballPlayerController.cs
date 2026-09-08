@@ -14,6 +14,8 @@ public enum FootballPlayerControlSource
 public sealed class FootballPlayerController : MonoBehaviour
 {
     private const float MinimumScaleMultiplier = 0.01f;
+    private const float GroundMoveSpeedMultiplier = 0.85f;
+    private const float AirMoveSpeedMultiplier = 0.7f;
 
     [SerializeField] private Transform _visualRoot;
     [SerializeField] private LayerMask _groundMask;
@@ -329,7 +331,7 @@ public sealed class FootballPlayerController : MonoBehaviour
         else
             velocity.x = Mathf.MoveTowards(
                 velocity.x,
-                _moveInput.x * _moveSpeed,
+                _moveInput.x * _moveSpeed * AirMoveSpeedMultiplier,
                 acceleration * Time.fixedDeltaTime
             );
 
@@ -351,7 +353,7 @@ public sealed class FootballPlayerController : MonoBehaviour
             moveAxis = -moveAxis;
 
         float currentSpeed = Vector3.Dot(velocity, moveAxis);
-        float targetSpeed = _moveInput.x * _moveSpeed;
+        float targetSpeed = _moveInput.x * _moveSpeed * GroundMoveSpeedMultiplier;
         float newSpeed = Mathf.MoveTowards(
             currentSpeed,
             targetSpeed,

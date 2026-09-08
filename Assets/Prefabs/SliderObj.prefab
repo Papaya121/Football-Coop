@@ -54,6 +54,9 @@ MonoBehaviour:
   _slider: {fileID: 8901879024008049680}
   _valueText: {fileID: 7224722853060788960}
   _valueFormat: 0.0
+  _useCustomRange: 0
+  _minimumValue: 0
+  _maximumValue: 20
 --- !u!1 &2577003937752208756
 GameObject:
   m_ObjectHideFlags: 0

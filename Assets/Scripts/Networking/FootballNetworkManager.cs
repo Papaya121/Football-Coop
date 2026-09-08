@@ -146,6 +146,11 @@ public sealed class FootballNetworkManager : NetworkManager
         _clientMatchScene?.BindNetworkBall(ball);
     }
 
+    public void BindClientPlayer(FootballPlayerController player)
+    {
+        _clientMatchScene?.BindNetworkPlayer(player);
+    }
+
     public void RequestMatchExit(bool matchFinished)
     {
         if (!NetworkClient.isConnected || _clientMatchId == 0 || _returningToMenu)
@@ -154,7 +159,10 @@ public sealed class FootballNetworkManager : NetworkManager
         if (matchFinished || _clientMatchState == FootballMatchState.Finished)
             NetworkClient.Send(new FootballLeaveMatchMessage { MatchId = _clientMatchId });
         else
+        {
+            FootballAnalytics.AbortMatch();
             NetworkClient.Send(new FootballGiveUpMessage { MatchId = _clientMatchId });
+        }
     }
 
     public override void OnStartServer()
@@ -244,6 +252,7 @@ public sealed class FootballNetworkManager : NetworkManager
 
     public override void OnClientDisconnect()
     {
+        FootballAnalytics.AbortMatch();
         FootballNetworkDiagnostics.Write("CLIENT", "Disconnected.");
         base.OnClientDisconnect();
         BeginClientReturnToMenu("Соединение с сервером закрыто");

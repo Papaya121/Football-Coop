@@ -309,7 +309,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 579b9ca954f5456790fda36d396fa244, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FootballBall
-  _maxLinearSpeed: 24
+  _maxLinearSpeed: 27
   _maxAngularSpeed: 45
   _lockToGameplayPlane: 1
   _strongKickSpeed: 18

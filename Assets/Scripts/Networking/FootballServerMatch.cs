@@ -25,6 +25,8 @@ public sealed class FootballServerMatch : IDisposable
     private int _leftScore;
     private int _rightScore;
     private FootballTeamSide _lastScoringSide;
+    private FootballGoalKickType _lastGoalKickType;
+    private bool _lastGoalWasOwnGoal;
     private FootballMatchResult _result = FootballMatchResult.Draw;
     private uint _eventSequence;
     private FootballMatchEvent _pendingEvent;
@@ -236,6 +238,9 @@ public sealed class FootballServerMatch : IDisposable
 
         FootballTeamSide scoringSide = goalZone.DefendingSide.Opposite();
         _lastScoringSide = scoringSide;
+        _lastGoalKickType = ball.LastTouchKickType;
+        _lastGoalWasOwnGoal = TryGetLastTouchSide(ball, out FootballTeamSide touchSide) &&
+            touchSide == goalZone.DefendingSide;
 
         if (scoringSide == FootballTeamSide.Left)
             _leftScore++;
@@ -281,6 +286,8 @@ public sealed class FootballServerMatch : IDisposable
             LeftScore = _leftScore,
             RightScore = _rightScore,
             LastScoringSide = _lastScoringSide,
+            LastGoalKickType = _lastGoalKickType,
+            LastGoalWasOwnGoal = _lastGoalWasOwnGoal,
             Result = _result,
             EventSequence = _eventSequence,
             Event = _pendingEvent
@@ -321,6 +328,21 @@ public sealed class FootballServerMatch : IDisposable
             return FootballMatchResult.RightWon;
 
         return FootballMatchResult.Draw;
+    }
+
+    private static bool TryGetLastTouchSide(FootballBall ball, out FootballTeamSide side)
+    {
+        FootballPlayerController player = ball != null ? ball.LastTouchPlayer : null;
+        FootballNetworkPlayer networkPlayer = player != null ? player.GetComponent<FootballNetworkPlayer>() : null;
+
+        if (networkPlayer != null)
+        {
+            side = networkPlayer.TeamSide;
+            return true;
+        }
+
+        side = default;
+        return false;
     }
 
     private float GetResultPresentationRemainingSeconds()

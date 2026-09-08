@@ -28,6 +28,9 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
     private PhysicsScene _serverPhysicsScene;
     private bool _simulateServerPhysics;
     private ulong _simulationStepCount;
+    private bool _analyticsMatchStarted;
+    private bool _analyticsMatchFinished;
+    private bool _profileMatchRecorded;
 
     public FootballGoalZone[] GoalZones => _goalZones;
     public bool IsServerPhysicsSimulationRunning => _simulateServerPhysics;
@@ -36,6 +39,7 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
     private void Awake()
     {
         CaptureSpawnPoints();
+        BindLocalPlayerBillboards();
         DisableLegacyPhysicsSimulator();
 
         if (NetworkServer.active || NetworkClient.active)
@@ -126,9 +130,38 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
         }
     }
 
+    public void BindNetworkPlayer(FootballPlayerController player)
+    {
+        BindPlayerBillboards(player, GetGameplayCamera());
+    }
+
     [Client]
     public void ApplySnapshot(FootballMatchStateMessage snapshot, FootballTeamSide localSide)
     {
+        if (!_analyticsMatchStarted &&
+            snapshot.State != FootballMatchState.WaitingForPlayers &&
+            snapshot.State != FootballMatchState.Countdown)
+        {
+            _analyticsMatchStarted = true;
+            FootballAnalytics.MatchStarted(true);
+        }
+
+        if (!_analyticsMatchFinished && snapshot.State == FootballMatchState.Finished)
+        {
+            _analyticsMatchFinished = true;
+            bool draw = snapshot.Result == FootballMatchResult.Draw;
+            bool playerWon =
+                (snapshot.Result == FootballMatchResult.LeftWon && localSide == FootballTeamSide.Left) ||
+                (snapshot.Result == FootballMatchResult.RightWon && localSide == FootballTeamSide.Right);
+            FootballAnalytics.MatchFinished(playerWon, draw);
+        }
+
+        if (!_profileMatchRecorded && snapshot.State == FootballMatchState.Finished)
+        {
+            _profileMatchRecorded = true;
+            LocalPlayerProfile.Service.RecordMatch(GetLocalPlayerOutcome(snapshot.Result, localSide));
+        }
+
         if (_exitButtons != null)
         {
             foreach (FootballNetworkMatchExitButton exitButton in _exitButtons)
@@ -183,7 +216,28 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
         if (snapshot.Event == FootballMatchEvent.Whistle)
             FootballSoundPlayer.TryPlay(FootballSoundIds.Whistle, Vector3.zero);
         else if (snapshot.Event == FootballMatchEvent.Goal)
+        {
             FootballSoundPlayer.TryPlay(FootballSoundIds.Goal, Vector3.zero);
+            FootballAnalytics.Goal(
+                snapshot.LastScoringSide == localSide,
+                snapshot.LastGoalKickType,
+                snapshot.LastGoalWasOwnGoal
+            );
+        }
+    }
+
+    private static PlayerMatchOutcome GetLocalPlayerOutcome(
+        FootballMatchResult result,
+        FootballTeamSide localSide)
+    {
+        if (result == FootballMatchResult.Draw)
+            return PlayerMatchOutcome.Draw;
+
+        bool playerWon =
+            (result == FootballMatchResult.LeftWon && localSide == FootballTeamSide.Left) ||
+            (result == FootballMatchResult.RightWon && localSide == FootballTeamSide.Right);
+
+        return playerWon ? PlayerMatchOutcome.Victory : PlayerMatchOutcome.Defeat;
     }
 
 #if UNITY_EDITOR
@@ -231,6 +285,40 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
 
         _ballSpawnPoint = new SpawnPoint(_localBall.transform.position, _localBall.transform.rotation);
         _hasBallSpawnPoint = true;
+    }
+
+    private void BindLocalPlayerBillboards()
+    {
+        if (_localPlayers == null)
+            return;
+
+        Camera gameplayCamera = GetGameplayCamera();
+
+        foreach (FootballPlayerController player in _localPlayers)
+            BindPlayerBillboards(player, gameplayCamera);
+    }
+
+    private Camera GetGameplayCamera()
+    {
+        if (_gameplayCameras == null)
+            return null;
+
+        foreach (FootballGameplayCamera gameplayCamera in _gameplayCameras)
+        {
+            if (gameplayCamera != null && gameplayCamera.TryGetComponent(out Camera camera))
+                return camera;
+        }
+
+        return null;
+    }
+
+    private static void BindPlayerBillboards(FootballPlayerController player, Camera gameplayCamera)
+    {
+        if (player == null || gameplayCamera == null)
+            return;
+
+        foreach (CanvasBillboard billboard in player.GetComponentsInChildren<CanvasBillboard>(true))
+            billboard.SetTargetCamera(gameplayCamera);
     }
 
     private void SetServerPresentationEnabled(bool enabled)

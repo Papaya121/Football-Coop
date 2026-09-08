@@ -6,6 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public sealed class FootballBallKicker : MonoBehaviour
 {
+    public const float LobDirectionThreshold = 0.5f;
+
     [SerializeField] private FootballPlayerController _controller;
     [SerializeField] private Transform _kickOrigin;
     [SerializeField] private Vector3 _originOffset = new Vector3(0f, 0.65f, 0f);
@@ -38,7 +40,7 @@ public sealed class FootballBallKicker : MonoBehaviour
         EnsureProfile();
     }
 
-    public bool TryKick()
+    public bool TryKick(float normalizedCharge = 0f, bool isLob = false)
     {
         EnsureProfile();
         KickAttempted?.Invoke();
@@ -49,14 +51,43 @@ public sealed class FootballBallKicker : MonoBehaviour
         if (!TryFindBall(out FootballBall ball))
             return false;
 
-        Vector3 linearVelocity = _kickProfile.CreateLinearVelocity(_controller.FacingDirection, _rigidbody.linearVelocity, ball.LinearVelocity);
+        float minimumKickForce = Mathf.Max(
+            0f,
+            GameParameterSessionValues.GetValue(GameParameterId.BallKickMinForce)
+        );
+        float maximumKickForce = Mathf.Max(
+            minimumKickForce,
+            GameParameterSessionValues.GetValue(GameParameterId.BallKickMaxForce)
+        );
+        float configuredKickForce = Mathf.Lerp(
+            minimumKickForce,
+            maximumKickForce,
+            Mathf.Clamp01(normalizedCharge)
+        );
+        float configuredPowerMultiplier = _kickProfile.Speed > Mathf.Epsilon
+            ? configuredKickForce / _kickProfile.Speed
+            : 0f;
+
+        Vector3 linearVelocity = _kickProfile.CreateLinearVelocity(
+            _controller.FacingDirection,
+            _rigidbody.linearVelocity,
+            ball.LinearVelocity,
+            configuredPowerMultiplier,
+            isLob
+        );
         Vector3 angularVelocity = _kickProfile.CreateAngularVelocity(linearVelocity);
 
+        ball.RecordTouch(_controller, FootballGoalKickType.Leg);
         ball.ApplyKick(linearVelocity, angularVelocity, _kickProfile.ReceptionSuppressionTime);
         _nextKickTime = Time.time + _kickProfile.Cooldown;
         Kicked?.Invoke();
 
         return true;
+    }
+
+    public static bool IsLobDirection(Vector2 moveInput)
+    {
+        return moveInput.y >= LobDirectionThreshold;
     }
 
     private bool TryFindBall(out FootballBall selectedBall)
