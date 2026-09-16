@@ -214,7 +214,10 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
         if (!_serverGameplayEnabled)
             return;
 
-        float powerMultiplier = GetPowerMultiplier(normalizedCharge);
+        if (_kicker != null && _kicker.ChargeControlsHeight)
+            isLob = false;
+
+        float powerMultiplier = GetKickPowerMultiplier(normalizedCharge);
 
         if (!isLob && _bicycleKicker != null && _bicycleKicker.CanAttemptBicycleKick())
         {
@@ -314,7 +317,8 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
             !_shotCharge.TryReleaseCharge(FootballShotChargeAction.Kick, out normalizedCharge))
             return;
 
-        bool isLob = FootballBallKicker.IsLobDirection(_input.Player.Move.ReadValue<Vector2>());
+        bool isLob = (_kicker == null || !_kicker.ChargeControlsHeight) &&
+            FootballBallKicker.IsLobDirection(_input.Player.Move.ReadValue<Vector2>());
         CmdKick(normalizedCharge, isLob);
     }
 
@@ -342,6 +346,14 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
             return;
 
         CmdHeader(normalizedCharge);
+    }
+
+    private float GetKickPowerMultiplier(float normalizedCharge)
+    {
+        if (_kicker != null && _kicker.ChargeControlsHeight)
+            normalizedCharge = 0f;
+
+        return GetPowerMultiplier(normalizedCharge);
     }
 
     private float GetPowerMultiplier(float normalizedCharge)

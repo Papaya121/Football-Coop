@@ -193,6 +193,7 @@ MonoBehaviour:
     _range: 1.05
     _maxKickAngle: 105
     _speed: 15
+    _chargeControlsHeight: 1
     _upwardInfluence: 0.18
     _lobUpwardInfluence: 0.65
     _playerVelocityInfluence: 0.35
@@ -727,14 +728,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e0d6fb4a931e4ed0b157aeb7da041cf7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FootballShotCharge
   _canvasGroup: {fileID: 1515343673725022949}
   _fillImage: {fileID: 3334493251379785150}
   _fadeInDuration: 0.12
   _fadeOutDuration: 0.1
   _chargeDelay: 0.15
-  _chargeDuration: 1.2
+  _chargeDuration: 0.6
   _fixedPowerMultiplier: 1
   _maximumPowerMultiplier: 1.8
   _powerCurve:

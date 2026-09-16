@@ -19,6 +19,11 @@ public sealed class FootballBall : MonoBehaviour
     [FormerlySerializedAs("_strongKickSoundSpeed")]
     [SerializeField, Min(0f)] private float _strongKickSpeed = 18f;
 
+    [Header("Stuck kick escape")]
+    [SerializeField, Min(0f)] private float _stuckKickCollisionWindow = 0.12f;
+    [SerializeField, Min(0f)] private float _stuckKickUpwardSpeed = 12f;
+    [SerializeField, Range(0f, 1f)] private float _stuckKickHorizontalSpeedMultiplier = 0.25f;
+
     [Header("Strong kick VFX")]
     [SerializeField] private GameObject _strongKickVfx;
     [SerializeField, Min(0f)] private float _strongKickVfxDuration = 0.8f;
@@ -35,6 +40,8 @@ public sealed class FootballBall : MonoBehaviour
     private float _passiveContactSuppressedUntil;
     private float _strongKickVfxEndTime;
     private bool _strongKickVfxIsFading;
+    private FootballPlayerController _recentKickPlayer;
+    private float _stuckKickCollisionUntil;
 
     public Vector3 LinearVelocity => _rigidbody.linearVelocity;
     public bool CanReceivePassiveContact => Time.time >= _passiveContactSuppressedUntil;
@@ -60,6 +67,7 @@ public sealed class FootballBall : MonoBehaviour
     private void OnDisable()
     {
         GameParameterSessionValues.ValueChanged -= OnGameParameterChanged;
+        ClearStuckKickEscape();
         StopStrongKickVfx();
     }
 
@@ -91,10 +99,17 @@ public sealed class FootballBall : MonoBehaviour
         if (collision == null || collision.collider == null)
             return;
 
+        TryEscapeStuckKick(collision);
+
         FootballSoundSurface surface = collision.collider.GetComponentInParent<FootballSoundSurface>();
 
         if (surface != null)
             surface.TryPlay(collision);
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        TryEscapeStuckKick(collision);
     }
 
     public void ApplyReception(Vector3 linearVelocity, float angularVelocityMultiplier)
@@ -108,6 +123,7 @@ public sealed class FootballBall : MonoBehaviour
     public void ApplyKick(Vector3 linearVelocity, Vector3 angularVelocity, float passiveContactSuppressionTime)
     {
         ApplyDirectedHit(linearVelocity, angularVelocity, passiveContactSuppressionTime);
+        ArmStuckKickEscape();
         PlayKickSound(linearVelocity);
 
         if (linearVelocity.magnitude >= _strongKickSpeed)
@@ -116,11 +132,13 @@ public sealed class FootballBall : MonoBehaviour
 
     public void ApplyHeader(Vector3 linearVelocity, Vector3 angularVelocity, float passiveContactSuppressionTime)
     {
+        ClearStuckKickEscape();
         ApplyDirectedHit(linearVelocity, angularVelocity, passiveContactSuppressionTime);
     }
 
     public void ApplyBicycleKick(Vector3 linearVelocity, Vector3 angularVelocity, float passiveContactSuppressionTime)
     {
+        ClearStuckKickEscape();
         ApplyDirectedHit(linearVelocity, angularVelocity, passiveContactSuppressionTime);
         FootballSoundPlayer.TryPlay(FootballSoundIds.StrongKick, transform.position);
         PlayStrongKickVfx();
@@ -142,6 +160,7 @@ public sealed class FootballBall : MonoBehaviour
         ResolveReferences();
 
         _passiveContactSuppressedUntil = 0f;
+        ClearStuckKickEscape();
         LastTouchPlayer = null;
         LastTouchKickType = FootballGoalKickType.Unknown;
         _rigidbody.linearVelocity = Vector3.zero;
@@ -185,6 +204,55 @@ public sealed class FootballBall : MonoBehaviour
         _rigidbody.linearVelocity = ClampLinearVelocity(ToGameplayPlane(linearVelocity));
         _rigidbody.angularVelocity = ClampAngularVelocity(angularVelocity);
         SuppressPassiveContact(passiveContactSuppressionTime);
+    }
+
+    private void ArmStuckKickEscape()
+    {
+        if (LastTouchPlayer == null || _stuckKickCollisionWindow <= 0f)
+        {
+            ClearStuckKickEscape();
+            return;
+        }
+
+        _recentKickPlayer = LastTouchPlayer;
+        _stuckKickCollisionUntil = Time.time + _stuckKickCollisionWindow;
+    }
+
+    private void TryEscapeStuckKick(Collision collision)
+    {
+        if (_recentKickPlayer == null || collision == null)
+            return;
+
+        if (Time.time > _stuckKickCollisionUntil)
+        {
+            ClearStuckKickEscape();
+            return;
+        }
+
+        FootballPlayerController blockingPlayer = collision.collider != null
+            ? collision.collider.GetComponentInParent<FootballPlayerController>()
+            : null;
+
+        if (blockingPlayer == null && collision.rigidbody != null)
+            blockingPlayer = collision.rigidbody.GetComponent<FootballPlayerController>();
+
+        if (blockingPlayer == null || blockingPlayer == _recentKickPlayer)
+            return;
+
+        ResolveReferences();
+
+        Vector3 velocity = ToGameplayPlane(_rigidbody.linearVelocity);
+        velocity.x *= _stuckKickHorizontalSpeedMultiplier;
+        velocity.y = Mathf.Max(velocity.y, _stuckKickUpwardSpeed);
+        _rigidbody.linearVelocity = ClampLinearVelocity(velocity);
+
+        ClearStuckKickEscape();
+    }
+
+    private void ClearStuckKickEscape()
+    {
+        _recentKickPlayer = null;
+        _stuckKickCollisionUntil = 0f;
     }
 
     private void ResolveReferences()

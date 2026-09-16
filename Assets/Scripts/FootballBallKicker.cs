@@ -26,6 +26,7 @@ public sealed class FootballBallKicker : MonoBehaviour
     public Vector3 ZoneOrigin => GetOrigin();
     public float ZoneRange => _kickProfile != null ? _kickProfile.Range : 0f;
     public float ZoneAngle => _kickProfile != null ? _kickProfile.MaxKickAngle : 0f;
+    public bool ChargeControlsHeight => _kickProfile != null && _kickProfile.ChargeControlsHeight;
     public int FacingDirection => _controller != null ? _controller.FacingDirection : 1;
 
     private void Awake()
@@ -51,19 +52,18 @@ public sealed class FootballBallKicker : MonoBehaviour
         if (!TryFindBall(out FootballBall ball))
             return false;
 
-        float minimumKickForce = Mathf.Max(
+        float kickForce = Mathf.Max(
             0f,
-            GameParameterSessionValues.GetValue(GameParameterId.BallKickMinForce)
+            GameParameterSessionValues.GetValue(GameParameterId.BallKickForce)
         );
-        float maximumKickForce = Mathf.Max(
-            minimumKickForce,
-            GameParameterSessionValues.GetValue(GameParameterId.BallKickMaxForce)
-        );
-        float configuredKickForce = Mathf.Lerp(
-            minimumKickForce,
-            maximumKickForce,
-            Mathf.Clamp01(normalizedCharge)
-        );
+        float clampedCharge = Mathf.Clamp01(normalizedCharge);
+        float configuredKickForce = _kickProfile.ChargeControlsHeight
+            ? kickForce
+            : Mathf.Lerp(
+                Mathf.Min(GameParameterDefinitions.LegacyMinimumBallKickForce, kickForce),
+                kickForce,
+                clampedCharge
+            );
         float configuredPowerMultiplier = _kickProfile.Speed > Mathf.Epsilon
             ? configuredKickForce / _kickProfile.Speed
             : 0f;
@@ -73,7 +73,8 @@ public sealed class FootballBallKicker : MonoBehaviour
             _rigidbody.linearVelocity,
             ball.LinearVelocity,
             configuredPowerMultiplier,
-            isLob
+            isLob,
+            clampedCharge
         );
         Vector3 angularVelocity = _kickProfile.CreateAngularVelocity(linearVelocity);
 

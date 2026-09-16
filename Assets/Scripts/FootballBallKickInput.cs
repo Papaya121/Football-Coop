@@ -87,11 +87,15 @@ public sealed class FootballBallKickInput : MonoBehaviour
             if (!_shotCharge.TryReleaseCharge(FootballShotChargeAction.Kick, out normalizedCharge))
                 return;
 
-            powerMultiplier = _shotCharge.EvaluatePowerMultiplier(normalizedCharge);
+            powerMultiplier = _kicker.ChargeControlsHeight
+                ? _shotCharge.EvaluatePowerMultiplier(0f)
+                : _shotCharge.EvaluatePowerMultiplier(normalizedCharge);
             normalizedCharge = _shotCharge.EvaluateNormalizedCharge(normalizedCharge);
         }
 
-        bool isLob = _controller != null && FootballBallKicker.IsLobDirection(_controller.MoveInput);
+        bool isLob = !_kicker.ChargeControlsHeight &&
+            _controller != null &&
+            FootballBallKicker.IsLobDirection(_controller.MoveInput);
 
         if (!isLob && _bicycleKicker != null && _bicycleKicker.CanAttemptBicycleKick())
         {
