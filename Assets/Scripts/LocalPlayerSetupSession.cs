@@ -6,7 +6,8 @@ public enum LocalMatchMode
 {
     HumanVsHuman,
     HumanVsAi,
-    Tutorial
+    Tutorial,
+    OnlineFallbackAi
 }
 
 public static class LocalPlayerSetupSession
@@ -21,8 +22,10 @@ public static class LocalPlayerSetupSession
     public static int PlayerCount { get; private set; }
     public static bool IsConfirmed { get; private set; }
     public static LocalMatchMode MatchMode { get; private set; }
-    public static bool IsAiMatch => MatchMode == LocalMatchMode.HumanVsAi || MatchMode == LocalMatchMode.Tutorial;
+    public static bool IsAiMatch => MatchMode == LocalMatchMode.HumanVsAi ||
+        MatchMode == LocalMatchMode.Tutorial || MatchMode == LocalMatchMode.OnlineFallbackAi;
     public static bool IsTutorial => MatchMode == LocalMatchMode.Tutorial;
+    public static bool IsOnlineFallbackAiMatch => MatchMode == LocalMatchMode.OnlineFallbackAi;
     public static int RequiredHumanPlayerCount => IsAiMatch ? 1 : PlayerCapacity;
     public static bool IsReady => PlayerCount == RequiredHumanPlayerCount;
 
@@ -50,6 +53,11 @@ public static class LocalPlayerSetupSession
     public static bool PrepareAiMatch(FootballPlayerControlSource source, InputDevice device)
     {
         return PrepareSinglePlayerMatch(LocalMatchMode.HumanVsAi, source, device);
+    }
+
+    public static bool PrepareOnlineFallbackAiMatch(FootballPlayerControlSource source, InputDevice device)
+    {
+        return PrepareSinglePlayerMatch(LocalMatchMode.OnlineFallbackAi, source, device);
     }
 
     public static bool PrepareTutorialMatch(FootballPlayerControlSource source, InputDevice device)

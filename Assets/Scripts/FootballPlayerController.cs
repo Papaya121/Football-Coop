@@ -256,6 +256,12 @@ public sealed class FootballPlayerController : MonoBehaviour
         if (_isExternallyControlled && !_simulateExternalPhysics)
             return;
 
+        if (!_isExternallyControlled && FootballMatchResultModal.IsOpen)
+        {
+            _moveInput = Vector2.zero;
+            _jumpBufferTimer = 0f;
+        }
+
         _isGrounded = CheckGrounded();
 
         UpdateTimers();
@@ -270,12 +276,12 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void OnMove(InputAction.CallbackContext context)
     {
-        _moveInput = context.ReadValue<Vector2>();
+        _moveInput = FootballMatchResultModal.IsOpen ? Vector2.zero : context.ReadValue<Vector2>();
     }
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (!context.performed)
+        if (!context.performed || FootballMatchResultModal.IsOpen)
             return;
 
         _jumpBufferTimer = _jumpBufferTime;
@@ -540,6 +546,7 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void ApplyGameParameters()
     {
+        _moveSpeed = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerSpeed));
         _gravity = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerGravity));
         _jumpForce = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerJump));
         _airAcceleration = Mathf.Max(0f, GameParameterSessionValues.GetValue(GameParameterId.PlayerAirAcceleration));

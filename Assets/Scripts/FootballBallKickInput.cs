@@ -64,6 +64,12 @@ public sealed class FootballBallKickInput : MonoBehaviour
 
     private void OnKick(InputAction.CallbackContext context)
     {
+        if (FootballMatchResultModal.IsOpen)
+        {
+            _shotCharge?.CancelCharge(FootballShotChargeAction.Kick);
+            return;
+        }
+
         if (context.started)
         {
             _shotCharge?.BeginCharge(FootballShotChargeAction.Kick);

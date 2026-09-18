@@ -23,6 +23,8 @@ public sealed class FootballNetworkManager : NetworkManager
     [SerializeField, Min(1f)] private float _matchDurationSeconds = 180f;
     [SerializeField, Min(1)] private int _countdownSeconds = 3;
     [SerializeField, Min(0f)] private float _resultPresentationSeconds = 10f;
+    [SerializeField, Min(1f)] private float _connectionTimeoutSeconds = 8f;
+    [SerializeField, Min(1f)] private float _soloQueueTimeoutSeconds = 10f;
 
     private readonly FootballMatchmakingQueue _queue = new FootballMatchmakingQueue();
     private readonly Dictionary<uint, FootballServerMatch> _matches = new Dictionary<uint, FootballServerMatch>();
@@ -42,12 +44,16 @@ public sealed class FootballNetworkManager : NetworkManager
     private bool _returningToMenu;
     private Coroutine _clientMenuTransition;
     private string _clientReturnStatus;
+    private Coroutine _connectionTimeout;
+    private Coroutine _soloQueueTimeout;
+    private bool _fallbackToAiPending;
 
     public static FootballNetworkManager Instance => singleton as FootballNetworkManager;
 
     public event Action<string> MatchmakingStatusChanged;
     public event Action MatchLoading;
     public event Action ReturnedToMenu;
+    public event Action AiFallbackRequested;
 
     public override void Awake()
     {
@@ -102,6 +108,9 @@ public sealed class FootballNetworkManager : NetworkManager
             return;
         }
 
+        if (_searchRequested || _fallbackToAiPending)
+            return;
+
         if (NetworkServer.active && !NetworkClient.active)
         {
             SetClientStatus("Сервер запущен. Подключите отдельный клиент.");
@@ -114,6 +123,7 @@ public sealed class FootballNetworkManager : NetworkManager
         {
             NetworkClient.Send(new FootballFindMatchMessage());
             SetClientStatus("Поиск матча…");
+            StartSoloQueueTimeout();
             return;
         }
 
@@ -123,14 +133,17 @@ public sealed class FootballNetworkManager : NetworkManager
                 ? DefaultServerAddress
                 : networkAddress;
             networkAddress = GetCommandLineValue("-networkAddress", fallbackAddress);
-            SetClientStatus($"Подключение к {networkAddress}…");
+            SetClientStatus("Подключение");
             StartClient();
+            _connectionTimeout = StartCoroutine(WaitForConnectionTimeout());
         }
     }
 
     public void CancelMatchmaking()
     {
         _searchRequested = false;
+        _fallbackToAiPending = false;
+        StopMatchmakingTimeouts();
 
         if (NetworkClient.isConnected)
             NetworkClient.Send(new FootballCancelSearchMessage());
@@ -215,11 +228,13 @@ public sealed class FootballNetworkManager : NetworkManager
     {
         base.OnClientConnect();
         FootballNetworkDiagnostics.Write("CLIENT", $"Connected. connectionPresent={NetworkClient.connection != null}");
+        StopConnectionTimeout();
 
         if (_searchRequested)
         {
             NetworkClient.Send(new FootballFindMatchMessage());
             SetClientStatus("Поиск матча…");
+            StartSoloQueueTimeout();
         }
     }
 
@@ -252,16 +267,25 @@ public sealed class FootballNetworkManager : NetworkManager
 
     public override void OnClientDisconnect()
     {
+        bool searchingWithoutMatch = _searchRequested && _clientMatchId == 0;
         FootballAnalytics.AbortMatch();
         FootballNetworkDiagnostics.Write("CLIENT", "Disconnected.");
         base.OnClientDisconnect();
-        BeginClientReturnToMenu("Соединение с сервером закрыто");
+
+        if (searchingWithoutMatch)
+            BeginAiFallback("Сервер недоступен. Запуск матча с ботом…");
+        else if (!_fallbackToAiPending)
+            BeginClientReturnToMenu("Соединение с сервером закрыто");
     }
 
     public override void OnClientError(TransportError error, string reason)
     {
         FootballNetworkDiagnostics.Write("CLIENT", $"Transport error={error}; reason={reason}");
-        SetClientStatus($"Ошибка сети: {reason}");
+
+        if (_searchRequested && _clientMatchId == 0)
+            BeginAiFallback("Сервер недоступен. Запуск матча с ботом…");
+        else
+            SetClientStatus($"Ошибка сети: {reason}");
     }
 
     public override void OnServerConnect(NetworkConnectionToClient connection)
@@ -597,11 +621,22 @@ public sealed class FootballNetworkManager : NetworkManager
 
     private void OnClientQueueStatus(FootballQueueStatusMessage message)
     {
+        if (!_searchRequested || _clientMatchId != 0)
+            return;
+
         SetClientStatus($"В поиске: {message.WaitingPlayerCount} игрок(а)");
+
+        if (message.WaitingPlayerCount <= 1)
+            StartSoloQueueTimeout();
+        else
+            StopSoloQueueTimeout();
     }
 
     private void OnClientMatchFound(FootballMatchFoundMessage message)
     {
+        _searchRequested = false;
+        StopMatchmakingTimeouts();
+        GameParameterSessionValues.Clear();
         _clientMatchId = message.MatchId;
         _clientSide = message.Side;
         _clientMatchState = FootballMatchState.WaitingForPlayers;
@@ -632,6 +667,80 @@ public sealed class FootballNetworkManager : NetworkManager
     private void SetClientStatus(string status)
     {
         MatchmakingStatusChanged?.Invoke(status);
+    }
+
+    private IEnumerator WaitForConnectionTimeout()
+    {
+        yield return new WaitForSecondsRealtime(_connectionTimeoutSeconds);
+        _connectionTimeout = null;
+
+        if (_searchRequested && !NetworkClient.isConnected)
+            BeginAiFallback("Не удалось подключиться к серверу. Запуск матча с ботом…");
+    }
+
+    private IEnumerator WaitForSoloQueueTimeout()
+    {
+        yield return new WaitForSecondsRealtime(_soloQueueTimeoutSeconds);
+        _soloQueueTimeout = null;
+
+        if (_searchRequested && _clientMatchId == 0)
+            BeginAiFallback("Соперник не найден. Запуск матча с ботом…");
+    }
+
+    private void StartSoloQueueTimeout()
+    {
+        if (_soloQueueTimeout == null)
+            _soloQueueTimeout = StartCoroutine(WaitForSoloQueueTimeout());
+    }
+
+    private void StopConnectionTimeout()
+    {
+        if (_connectionTimeout == null)
+            return;
+
+        StopCoroutine(_connectionTimeout);
+        _connectionTimeout = null;
+    }
+
+    private void StopSoloQueueTimeout()
+    {
+        if (_soloQueueTimeout == null)
+            return;
+
+        StopCoroutine(_soloQueueTimeout);
+        _soloQueueTimeout = null;
+    }
+
+    private void StopMatchmakingTimeouts()
+    {
+        StopConnectionTimeout();
+        StopSoloQueueTimeout();
+    }
+
+    private void BeginAiFallback(string status)
+    {
+        if (_fallbackToAiPending || _clientMatchId != 0 || _returningToMenu)
+            return;
+
+        _fallbackToAiPending = true;
+        _searchRequested = false;
+        StopMatchmakingTimeouts();
+        FootballNetworkDiagnostics.Write("CLIENT", status);
+        StartCoroutine(StopClientForAiFallback(status));
+    }
+
+    private IEnumerator StopClientForAiFallback(string status)
+    {
+        // Leave the transport callback before stopping the client.
+        yield return null;
+
+        if (!_fallbackToAiPending)
+            yield break;
+
+        if (NetworkClient.active)
+            StopClient();
+
+        BeginClientReturnToMenu(status);
     }
 
     private void ApplyCommandLineConfiguration()
@@ -770,8 +879,18 @@ public sealed class FootballNetworkManager : NetworkManager
 
         _clientMenuTransition = null;
         _returningToMenu = false;
-        SetClientStatus(_clientReturnStatus);
-        ReturnedToMenu?.Invoke();
+
+        if (_fallbackToAiPending)
+        {
+            _fallbackToAiPending = false;
+            MatchLoading?.Invoke();
+            AiFallbackRequested?.Invoke();
+        }
+        else
+        {
+            SetClientStatus(_clientReturnStatus);
+            ReturnedToMenu?.Invoke();
+        }
     }
 
     private IEnumerator UnloadClientGameplayScenes()

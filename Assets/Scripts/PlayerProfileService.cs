@@ -11,6 +11,8 @@ public sealed class PlayerProfileService
     private bool _ratedMatchInProgress;
     private int _provisionalRatingDelta;
 
+    public int RatingBeforeCurrentMatch { get; private set; }
+
     public PlayerProfileService(IPlayerProfileRepository repository, IPlayerRatingPolicy ratingPolicy)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -40,6 +42,7 @@ public sealed class PlayerProfileService
         // A defeat is persisted up front so force-closing the application cannot
         // be used to avoid the rating penalty. A completed match reconciles it.
         int ratingBeforeMatch = Profile.Rating;
+        RatingBeforeCurrentMatch = ratingBeforeMatch;
         Profile.ChangeRating(_ratingPolicy.GetRatingDelta(PlayerMatchOutcome.Defeat));
         _provisionalRatingDelta = Profile.Rating - ratingBeforeMatch;
         _repository.Save(Profile);

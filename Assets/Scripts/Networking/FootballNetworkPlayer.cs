@@ -267,7 +267,9 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
     private void SendMovementInput()
     {
-        Vector2 moveInput = Vector2.ClampMagnitude(_input.Player.Move.ReadValue<Vector2>(), 1f);
+        Vector2 moveInput = FootballMatchResultModal.IsOpen
+            ? Vector2.zero
+            : Vector2.ClampMagnitude(_input.Player.Move.ReadValue<Vector2>(), 1f);
         bool changed = (moveInput - _lastSentMoveInput).sqrMagnitude > 0.0001f;
 
         if (!changed && Time.unscaledTime < _nextInputRefreshTime)
@@ -290,12 +292,18 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (context.performed)
+        if (context.performed && !FootballMatchResultModal.IsOpen)
             CmdJump();
     }
 
     private void OnKick(InputAction.CallbackContext context)
     {
+        if (FootballMatchResultModal.IsOpen)
+        {
+            _shotCharge?.CancelCharge();
+            return;
+        }
+
         if (context.started)
         {
             _shotCharge?.BeginCharge(FootballShotChargeAction.Kick);
@@ -324,6 +332,12 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
     private void OnHeader(InputAction.CallbackContext context)
     {
+        if (FootballMatchResultModal.IsOpen)
+        {
+            _shotCharge?.CancelCharge();
+            return;
+        }
+
         if (context.started)
         {
             _shotCharge?.BeginCharge(FootballShotChargeAction.Header);

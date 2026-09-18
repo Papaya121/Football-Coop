@@ -2,6 +2,7 @@ using System;
 using Mirror;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(10000)]
@@ -42,8 +43,27 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
         BindLocalPlayerBillboards();
         DisableLegacyPhysicsSimulator();
 
+        if (NetworkServer.active || NetworkClient.active || LocalPlayerSetupSession.IsOnlineFallbackAiMatch)
+            HideParameterControls();
+
         if (NetworkServer.active || NetworkClient.active)
             PrepareForNetwork();
+    }
+
+    private void HideParameterControls()
+    {
+        foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+        {
+            foreach (GameParameterSlider slider in root.GetComponentsInChildren<GameParameterSlider>(true))
+            {
+                Transform parent = slider.transform.parent;
+                GameObject controlGroup = parent != null && parent.TryGetComponent(out HorizontalLayoutGroup _)
+                    ? parent.gameObject
+                    : slider.gameObject;
+
+                controlGroup.SetActive(false);
+            }
+        }
     }
 
     [Server]
@@ -159,7 +179,11 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
         if (!_profileMatchRecorded && snapshot.State == FootballMatchState.Finished)
         {
             _profileMatchRecorded = true;
-            LocalPlayerProfile.Service.RecordMatch(GetLocalPlayerOutcome(snapshot.Result, localSide));
+            PlayerProfileService profileService = LocalPlayerProfile.Service;
+            PlayerMatchOutcome outcome = GetLocalPlayerOutcome(snapshot.Result, localSide);
+            int previousRating = profileService.Profile.Rating;
+            profileService.RecordMatch(outcome);
+            FootballMatchResultModal.ShowResult(outcome, previousRating, profileService.Profile.Rating);
         }
 
         if (_exitButtons != null)

@@ -3493,6 +3493,8 @@ MonoBehaviour:
   _matchDurationSeconds: 180
   _countdownSeconds: 3
   _resultPresentationSeconds: 10
+  _connectionTimeoutSeconds: 8
+  _soloQueueTimeoutSeconds: 10
 --- !u!114 &854216211
 MonoBehaviour:
   m_ObjectHideFlags: 0

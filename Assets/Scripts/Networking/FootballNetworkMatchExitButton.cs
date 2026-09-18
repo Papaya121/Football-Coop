@@ -101,7 +101,7 @@ public sealed class FootballNetworkMatchExitButton : MonoBehaviour
             return;
         }
 
-        if (LocalPlayerSetupSession.MatchMode == LocalMatchMode.HumanVsAi && !_matchFinished)
+        if (LocalPlayerSetupSession.IsAiMatch && !_matchFinished)
             _localMatchController?.TryForfeitLocalPlayer();
 
         Time.timeScale = 1f;
@@ -124,7 +124,7 @@ public sealed class FootballNetworkMatchExitButton : MonoBehaviour
     private void RefreshLocalLabel()
     {
         bool canGiveUp =
-            LocalPlayerSetupSession.MatchMode == LocalMatchMode.HumanVsAi && !_matchFinished;
+            LocalPlayerSetupSession.IsAiMatch && !_matchFinished;
         SetLabel(canGiveUp ? _giveUpText : _exitText);
 
         if (_button != null)

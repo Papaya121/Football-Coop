@@ -39,7 +39,7 @@ public sealed class FootballMatchController : MonoBehaviour
 
     private void Start()
     {
-        if (LocalPlayerSetupSession.MatchMode == LocalMatchMode.HumanVsAi)
+        if (LocalPlayerSetupSession.IsOnlineFallbackAiMatch)
             LocalPlayerProfile.Service.BeginRatedMatch();
 
         RefreshPlayerState();
@@ -73,10 +73,14 @@ public sealed class FootballMatchController : MonoBehaviour
 
             FootballMatchResult result = GetMatchResult();
 
-            if (!_profileMatchRecorded && LocalPlayerSetupSession.MatchMode == LocalMatchMode.HumanVsAi)
+            if (!_profileMatchRecorded && LocalPlayerSetupSession.IsOnlineFallbackAiMatch)
             {
                 _profileMatchRecorded = true;
-                LocalPlayerProfile.Service.CompleteRatedMatch(ToLocalPlayerOutcome(result));
+                PlayerProfileService profileService = LocalPlayerProfile.Service;
+                PlayerMatchOutcome outcome = ToLocalPlayerOutcome(result);
+                int previousRating = profileService.RatingBeforeCurrentMatch;
+                profileService.CompleteRatedMatch(outcome);
+                FootballMatchResultModal.ShowResult(outcome, previousRating, profileService.Profile.Rating);
             }
 
             if (!_analyticsMatchFinished && !LocalPlayerSetupSession.IsTutorial)
@@ -124,12 +128,19 @@ public sealed class FootballMatchController : MonoBehaviour
 
     public bool TryForfeitLocalPlayer()
     {
-        if (LocalPlayerSetupSession.MatchMode != LocalMatchMode.HumanVsAi ||
+        if (!LocalPlayerSetupSession.IsAiMatch || LocalPlayerSetupSession.IsTutorial ||
             _profileMatchRecorded || State == FootballMatchState.Finished)
             return false;
 
         _profileMatchRecorded = true;
-        LocalPlayerProfile.Service.CompleteRatedMatch(PlayerMatchOutcome.Defeat);
+
+        if (LocalPlayerSetupSession.IsOnlineFallbackAiMatch)
+        {
+            PlayerProfileService profileService = LocalPlayerProfile.Service;
+            int previousRating = profileService.RatingBeforeCurrentMatch;
+            profileService.CompleteRatedMatch(PlayerMatchOutcome.Defeat);
+            FootballMatchResultModal.ShowResult(PlayerMatchOutcome.Defeat, previousRating, profileService.Profile.Rating);
+        }
 
         if (!_analyticsMatchFinished)
         {
@@ -174,7 +185,10 @@ public sealed class FootballMatchController : MonoBehaviour
                 _hudView.ShowGoal(_hasLastScoringSide ? _lastScoringSide : FootballTeamSide.Left, _clock.MatchRemainingSeconds);
                 break;
             case FootballMatchState.Finished:
-                _hudView.ShowFinished(_clock.MatchRemainingSeconds, GetMatchResult());
+                if (LocalPlayerSetupSession.IsOnlineFallbackAiMatch)
+                    _hudView.ShowNetworkFinished(_clock.MatchRemainingSeconds, GetMatchResult(), FootballTeamSide.Left);
+                else
+                    _hudView.ShowFinished(_clock.MatchRemainingSeconds, GetMatchResult());
                 break;
         }
     }

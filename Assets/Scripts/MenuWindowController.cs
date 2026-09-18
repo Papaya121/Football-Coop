@@ -1,16 +1,20 @@
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public sealed class MenuWindowController : MonoBehaviour
 {
     private const string GameplaySceneName = "Gameplay";
+    private const int MenuFrameRate = 60;
     private const float StickJoinThreshold = 0.5f;
+    private static readonly Color SelectionColor = new Color(0.3f, 0.9f, 1f, 1f);
 
     [Header("Windows")]
     [SerializeField] private GameObject _mainWindow;
@@ -52,9 +56,17 @@ public sealed class MenuWindowController : MonoBehaviour
     private GameObject _visibleWindow;
     private bool _isLocalSetupOpen;
     private FootballNetworkManager _networkManager;
+    private readonly Dictionary<Graphic, Outline> _selectionOutlines = new();
+    private readonly HashSet<Button> _generatedNavigationButtons = new();
+    private Outline _selectedOutline;
+    private Coroutine _selectionCoroutine;
+    private Gamepad _preferredGamepad;
+    private int _lastGamepadJoinFrame = -1;
 
     private void Awake()
     {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = MenuFrameRate;
         ValidateReferences();
         CacheViewData();
         BindButtons();
@@ -70,8 +82,20 @@ public sealed class MenuWindowController : MonoBehaviour
         RefreshLocalSetup();
     }
 
+    private void Start()
+    {
+        RequestSelection(_mainWindow, _localGameButton);
+    }
+
     private void OnDisable()
     {
+        if (_selectionCoroutine != null)
+        {
+            StopCoroutine(_selectionCoroutine);
+            _selectionCoroutine = null;
+        }
+
+        SetSelectedOutline(null);
         _windowTransition?.Kill();
         _windowTransition = null;
         LocalPlayerSetupSession.Changed -= RefreshLocalSetup;
@@ -80,11 +104,63 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void Update()
     {
+        UpdatePreferredGamepad();
+
+        if (WasGamepadBackPressed())
+        {
+            HandleGamepadBack();
+            return;
+        }
+
         if (!_isLocalSetupOpen || LocalPlayerSetupSession.IsReady)
             return;
 
         TryJoinKeyboard();
         TryJoinGamepads();
+    }
+
+    private void LateUpdate()
+    {
+        if (_visibleWindow == null || FootballMatchResultModal.IsOpen)
+        {
+            SetSelectedOutline(null);
+            return;
+        }
+
+        EventSystem eventSystem = EventSystem.current;
+        Button selected = eventSystem != null && eventSystem.currentSelectedGameObject != null
+            ? eventSystem.currentSelectedGameObject.GetComponent<Button>()
+            : null;
+
+        if (selected == null || !selected.IsInteractable() ||
+            !selected.transform.IsChildOf(_visibleWindow.transform))
+        {
+            SetSelectedOutline(null);
+
+            if (_selectionCoroutine == null && GamepadNavigationHeld())
+                RequestSelection(_visibleWindow, GetPreferredButton(_visibleWindow));
+
+            return;
+        }
+
+        Graphic target = selected.targetGraphic;
+
+        if (target == null)
+        {
+            SetSelectedOutline(null);
+            return;
+        }
+
+        if (!_selectionOutlines.TryGetValue(target, out Outline outline) || outline == null)
+        {
+            outline = target.gameObject.AddComponent<Outline>();
+            outline.effectColor = SelectionColor;
+            outline.effectDistance = new Vector2(4f, -4f);
+            outline.enabled = false;
+            _selectionOutlines[target] = outline;
+        }
+
+        SetSelectedOutline(outline);
     }
 
     private void CacheViewData()
@@ -133,6 +209,10 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void CancelLocalSetup()
     {
+        if (WasGamepadSubmitPressed() &&
+            (!LocalPlayerSetupSession.IsReady || _lastGamepadJoinFrame == Time.frameCount))
+            return;
+
         FootballAnalytics.MenuButton(FootballAnalytics.PressButtonBack);
         LocalPlayerSetupSession.Clear();
         ShowMainWindow();
@@ -160,12 +240,18 @@ public sealed class MenuWindowController : MonoBehaviour
         StartSinglePlayerGame(true);
     }
 
-    private void StartSinglePlayerGame(bool tutorial)
+    private void StartSinglePlayerGame(bool tutorial, bool onlineFallback = false)
     {
         FootballPlayerControlSource source;
         InputDevice device;
+        Gamepad selectedGamepad = GetSubmittingGamepad() ?? _preferredGamepad;
 
-        if (Keyboard.current != null)
+        if (selectedGamepad != null && selectedGamepad.added)
+        {
+            source = FootballPlayerControlSource.Gamepad;
+            device = selectedGamepad;
+        }
+        else if (Keyboard.current != null)
         {
             source = FootballPlayerControlSource.WasdKeyboard;
             device = Keyboard.current;
@@ -183,7 +269,9 @@ public sealed class MenuWindowController : MonoBehaviour
 
         bool prepared = tutorial
             ? LocalPlayerSetupSession.PrepareTutorialMatch(source, device)
-            : LocalPlayerSetupSession.PrepareAiMatch(source, device);
+            : onlineFallback
+                ? LocalPlayerSetupSession.PrepareOnlineFallbackAiMatch(source, device)
+                : LocalPlayerSetupSession.PrepareAiMatch(source, device);
 
         if (!prepared)
         {
@@ -218,7 +306,7 @@ public sealed class MenuWindowController : MonoBehaviour
         }
 
         ShowOnly(_matchmakingWindow);
-        SetMatchmakingStatus("Подключение к серверу…");
+        SetMatchmakingStatus("Подключение");
         FootballAnalytics.MenuButton(FootballAnalytics.PressButtonStartOnline);
         _networkManager.FindMatch();
     }
@@ -278,6 +366,11 @@ public sealed class MenuWindowController : MonoBehaviour
         }
 
         _visibleWindow = window;
+
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(null);
+
+        SetSelectedOutline(null);
         Sequence sequence = DOTween.Sequence().SetUpdate(true);
 
         if (outgoingGroup != null && outgoingWindow != window)
@@ -295,7 +388,10 @@ public sealed class MenuWindowController : MonoBehaviour
             .OnComplete(() =>
             {
                 if (incomingGroup != null && _visibleWindow == window)
+                {
                     SetWindowInteraction(incomingGroup, true);
+                    RequestSelection(window, GetPreferredButton(window));
+                }
 
                 _windowTransition = null;
             })
@@ -307,6 +403,7 @@ public sealed class MenuWindowController : MonoBehaviour
         _windowTransition?.Kill();
         _windowTransition = null;
         _visibleWindow = window;
+        SetSelectedOutline(null);
 
         for (int i = 0; i < _windows.Length; i++)
         {
@@ -327,8 +424,19 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void ResolveNetworkManager()
     {
-        if (_networkManager == null)
-            _networkManager = FindAnyObjectByType<FootballNetworkManager>();
+        FootballNetworkManager manager = FootballNetworkManager.Instance;
+
+        if (manager == null)
+            manager = FindAnyObjectByType<FootballNetworkManager>();
+
+        if (_networkManager == manager)
+            return;
+
+        UnsubscribeFromNetworkEvents();
+        _networkManager = manager;
+
+        if (isActiveAndEnabled)
+            SubscribeToNetworkEvents();
     }
 
     private void SubscribeToNetworkEvents()
@@ -339,9 +447,11 @@ public sealed class MenuWindowController : MonoBehaviour
         _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
         _networkManager.MatchLoading -= HideMenuWindows;
         _networkManager.ReturnedToMenu -= ShowMultiplayer;
+        _networkManager.AiFallbackRequested -= StartAiFallbackGame;
         _networkManager.MatchmakingStatusChanged += SetMatchmakingStatus;
         _networkManager.MatchLoading += HideMenuWindows;
         _networkManager.ReturnedToMenu += ShowMultiplayer;
+        _networkManager.AiFallbackRequested += StartAiFallbackGame;
     }
 
     private void UnsubscribeFromNetworkEvents()
@@ -352,6 +462,13 @@ public sealed class MenuWindowController : MonoBehaviour
         _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
         _networkManager.MatchLoading -= HideMenuWindows;
         _networkManager.ReturnedToMenu -= ShowMultiplayer;
+        _networkManager.AiFallbackRequested -= StartAiFallbackGame;
+    }
+
+    private void StartAiFallbackGame()
+    {
+        GameParameterSessionValues.Clear();
+        StartSinglePlayerGame(false, true);
     }
 
     private void SetMatchmakingStatus(string status)
@@ -369,6 +486,14 @@ public sealed class MenuWindowController : MonoBehaviour
     {
         if (_startButton != null)
             _startButton.interactable = LocalPlayerSetupSession.IsReady;
+
+        if (_visibleWindow == _localWindow)
+        {
+            if (LocalPlayerSetupSession.IsReady)
+                RequestSelection(_localWindow, _startButton);
+            else
+                RequestSelection(_localWindow, _localBackButton);
+        }
 
         if (_deviceLabels == null)
             return;
@@ -408,7 +533,7 @@ public sealed class MenuWindowController : MonoBehaviour
             LocalPlayerSetupSession.TryAdd(FootballPlayerControlSource.ArrowKeyboard, keyboard);
     }
 
-    private static void TryJoinGamepads()
+    private void TryJoinGamepads()
     {
         foreach (Gamepad gamepad in Gamepad.all)
         {
@@ -424,8 +549,253 @@ public sealed class MenuWindowController : MonoBehaviour
 
             if (pressed || gamepad.leftStick.ReadValue().sqrMagnitude >= StickJoinThreshold * StickJoinThreshold ||
                 gamepad.rightStick.ReadValue().sqrMagnitude >= StickJoinThreshold * StickJoinThreshold)
-                LocalPlayerSetupSession.TryAdd(FootballPlayerControlSource.Gamepad, gamepad);
+            {
+                if (LocalPlayerSetupSession.TryAdd(FootballPlayerControlSource.Gamepad, gamepad))
+                    _lastGamepadJoinFrame = Time.frameCount;
+            }
         }
+    }
+
+    private void RequestSelection(GameObject window, Button preferred)
+    {
+        if (_selectionCoroutine != null)
+            StopCoroutine(_selectionCoroutine);
+
+        _selectionCoroutine = StartCoroutine(SelectWindowButtonNextFrame(window, preferred));
+    }
+
+    private IEnumerator SelectWindowButtonNextFrame(GameObject window, Button preferred)
+    {
+        yield return null;
+        _selectionCoroutine = null;
+
+        if (!isActiveAndEnabled || window == null || window != _visibleWindow ||
+            FootballMatchResultModal.IsOpen)
+            yield break;
+
+        EventSystem eventSystem = EventSystem.current;
+
+        if (eventSystem == null)
+            yield break;
+
+        Canvas.ForceUpdateCanvases();
+        List<Button> buttons = new();
+
+        foreach (Button button in window.GetComponentsInChildren<Button>(false))
+        {
+            if (button.gameObject.activeInHierarchy && button.IsInteractable())
+                buttons.Add(button);
+        }
+
+        foreach (Button button in buttons)
+        {
+            Navigation navigation = button.navigation;
+
+            // Keep links configured by hand in the Button's Navigation settings.
+            if (navigation.mode != Navigation.Mode.Automatic &&
+                !_generatedNavigationButtons.Contains(button))
+                continue;
+
+            navigation.mode = Navigation.Mode.Explicit;
+            navigation.selectOnUp = FindDirectionalButton(button, buttons, Vector2.up);
+            navigation.selectOnDown = FindDirectionalButton(button, buttons, Vector2.down);
+            navigation.selectOnLeft = FindDirectionalButton(button, buttons, Vector2.left);
+            navigation.selectOnRight = FindDirectionalButton(button, buttons, Vector2.right);
+            button.navigation = navigation;
+            _generatedNavigationButtons.Add(button);
+        }
+
+        if (window == _mainWindow && _tutorialButton != null &&
+            buttons.Contains(_tutorialButton) && buttons.Contains(_localGameButton))
+        {
+            // Learning sits below Game Buttons; Upper sits above them. Keep
+            // vertical travel through the middle row instead of skipping it.
+            SetGeneratedVerticalNeighbor(_tutorialButton, _localGameButton, true);
+            SetGeneratedVerticalNeighbor(_localGameButton, _tutorialButton, false);
+        }
+
+        Button firstSelection = preferred != null && buttons.Contains(preferred)
+            ? preferred
+            : buttons.Count > 0 ? buttons[0] : null;
+
+        if (firstSelection != null)
+            eventSystem.SetSelectedGameObject(firstSelection.gameObject);
+    }
+
+    private static Button FindDirectionalButton(Button source, List<Button> buttons, Vector2 direction)
+    {
+        Vector2 origin = GetButtonCenter(source);
+        Button nearest = null;
+        float bestScore = float.PositiveInfinity;
+
+        foreach (Button candidate in buttons)
+        {
+            if (candidate == source)
+                continue;
+
+            Vector2 offset = GetButtonCenter(candidate) - origin;
+            float forward = Vector2.Dot(offset, direction);
+            float sideways = Mathf.Abs(direction.x * offset.y - direction.y * offset.x);
+
+            float maximumSideways = forward * (direction.y != 0f ? 2f : 0.75f);
+
+            // Ignore buttons mostly to the side and leave an empty edge without wrapping.
+            if (forward <= 0.01f || sideways > maximumSideways)
+                continue;
+
+            float score = forward + sideways * (direction.y != 0f ? 0.5f : 2f);
+
+            if (score < bestScore)
+            {
+                bestScore = score;
+                nearest = candidate;
+            }
+        }
+
+        if (nearest != null || direction.y == 0f)
+            return nearest;
+
+        // The menu has separate button columns. When a column ends, Up/Down
+        // should still reach the closest row above or below in another column.
+        foreach (Button candidate in buttons)
+        {
+            if (candidate == source)
+                continue;
+
+            Vector2 offset = GetButtonCenter(candidate) - origin;
+            float forward = Vector2.Dot(offset, direction);
+
+            if (forward <= 0.01f)
+                continue;
+
+            float score = forward + Mathf.Abs(offset.x) * 0.25f;
+
+            if (score < bestScore)
+            {
+                bestScore = score;
+                nearest = candidate;
+            }
+        }
+
+        return nearest;
+    }
+
+    private void SetGeneratedVerticalNeighbor(Button source, Button target, bool up)
+    {
+        if (!_generatedNavigationButtons.Contains(source))
+            return;
+
+        Navigation navigation = source.navigation;
+
+        if (up)
+            navigation.selectOnUp = target;
+        else
+            navigation.selectOnDown = target;
+
+        source.navigation = navigation;
+    }
+
+    private static Vector2 GetButtonCenter(Button button)
+    {
+        if (button.transform is RectTransform rectTransform)
+            return rectTransform.TransformPoint(rectTransform.rect.center);
+
+        return button.transform.position;
+    }
+
+    private Button GetPreferredButton(GameObject window)
+    {
+        if (window == _mainWindow)
+            return _localGameButton;
+        if (window == _localWindow)
+            return LocalPlayerSetupSession.IsReady ? _startButton : _localBackButton;
+        if (window == _multiplayerWindow)
+            return _matchmakingButton;
+        if (window == _matchmakingWindow)
+            return _matchmakingBackButton;
+        return null;
+    }
+
+    private void SetSelectedOutline(Outline outline)
+    {
+        if (_selectedOutline == outline)
+            return;
+
+        if (_selectedOutline != null)
+            _selectedOutline.enabled = false;
+
+        _selectedOutline = outline;
+
+        if (_selectedOutline != null)
+            _selectedOutline.enabled = true;
+    }
+
+    private static bool GamepadNavigationHeld()
+    {
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (gamepad.dpad.ReadValue().sqrMagnitude > 0.25f ||
+                gamepad.leftStick.ReadValue().sqrMagnitude > StickJoinThreshold * StickJoinThreshold ||
+                gamepad.buttonSouth.wasPressedThisFrame)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool WasGamepadBackPressed()
+    {
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (gamepad.buttonEast.wasPressedThisFrame)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool WasGamepadSubmitPressed()
+    {
+        return GetSubmittingGamepad() != null;
+    }
+
+    private static Gamepad GetSubmittingGamepad()
+    {
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (gamepad.buttonSouth.wasPressedThisFrame)
+                return gamepad;
+        }
+
+        return null;
+    }
+
+    private void UpdatePreferredGamepad()
+    {
+        if ((Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame) ||
+            (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame))
+            _preferredGamepad = null;
+
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (gamepad.dpad.ReadValue().sqrMagnitude > 0.25f ||
+                gamepad.leftStick.ReadValue().sqrMagnitude > StickJoinThreshold * StickJoinThreshold ||
+                gamepad.buttonSouth.wasPressedThisFrame || gamepad.buttonEast.wasPressedThisFrame)
+            {
+                _preferredGamepad = gamepad;
+                return;
+            }
+        }
+    }
+
+    private void HandleGamepadBack()
+    {
+        if (_visibleWindow == _localWindow)
+            CancelLocalSetup();
+        else if (_visibleWindow == _matchmakingWindow)
+            CancelMatchmaking();
+        else if (_visibleWindow == _multiplayerWindow)
+            BackToMain();
     }
 
     private void ValidateReferences()

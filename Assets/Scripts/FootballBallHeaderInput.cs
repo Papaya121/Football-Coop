@@ -62,6 +62,12 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
 
     private void OnHeader(InputAction.CallbackContext context)
     {
+        if (FootballMatchResultModal.IsOpen)
+        {
+            _shotCharge?.CancelCharge(FootballShotChargeAction.Header);
+            return;
+        }
+
         if (context.started)
         {
             _shotCharge?.BeginCharge(FootballShotChargeAction.Header);

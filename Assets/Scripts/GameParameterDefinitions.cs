@@ -9,7 +9,8 @@ public enum GameParameterId
     PlayerAirAcceleration,
     BallKickForce,
     BallMaxSpeed,
-    BallMaxLobAngle
+    BallMaxLobAngle,
+    PlayerSpeed
 }
 
 public static class GameParameterDefinitions
@@ -21,6 +22,7 @@ public static class GameParameterDefinitions
     public const string PlayerJumpKey = "player_jump";
     public const string PlayerScaleKey = "player_scale";
     public const string PlayerAirAccelerationKey = "player_air_acceleration";
+    public const string PlayerSpeedKey = "player_speed";
     public const string BallKickForceKey = "ball_kick_force";
     public const string BallMaxSpeedKey = "ball_max_speed";
     public const string BallMaxLobAngleKey = "ball_max_lob_angle";
@@ -32,9 +34,10 @@ public static class GameParameterDefinitions
     public const float DefaultPlayerJump = 7f;
     public const float DefaultPlayerScale = 0.8f;
     public const float DefaultPlayerAirAcceleration = 12f;
+    public const float DefaultPlayerSpeed = 8f;
     public const float DefaultBallKickForce = 27f;
     public const float DefaultBallMaxSpeed = 27f;
-    public const float DefaultBallMaxLobAngle = 35f;
+    public const float DefaultBallMaxLobAngle = 70f;
     public const float LegacyMinimumBallKickForce = 15f;
 
     public const float MinBallGravity = 0f;
@@ -51,6 +54,8 @@ public static class GameParameterDefinitions
     public const float MaxPlayerScale = 2f;
     public const float MinPlayerAirAcceleration = 0f;
     public const float MaxPlayerAirAcceleration = 40f;
+    public const float MinPlayerSpeed = 0f;
+    public const float MaxPlayerSpeed = 20f;
     public const float MinBallKickForce = 0f;
     public const float MaxBallKickForce = 40f;
     public const float MinBallMaxLobAngle = 0f;
@@ -76,6 +81,8 @@ public static class GameParameterDefinitions
                 return PlayerScaleKey;
             case GameParameterId.PlayerAirAcceleration:
                 return PlayerAirAccelerationKey;
+            case GameParameterId.PlayerSpeed:
+                return PlayerSpeedKey;
             case GameParameterId.BallKickForce:
                 return BallKickForceKey;
             case GameParameterId.BallMaxSpeed:
@@ -105,6 +112,8 @@ public static class GameParameterDefinitions
                 return DefaultPlayerScale;
             case GameParameterId.PlayerAirAcceleration:
                 return DefaultPlayerAirAcceleration;
+            case GameParameterId.PlayerSpeed:
+                return DefaultPlayerSpeed;
             case GameParameterId.BallKickForce:
                 return DefaultBallKickForce;
             case GameParameterId.BallMaxSpeed:
@@ -134,6 +143,8 @@ public static class GameParameterDefinitions
                 return DefaultPlayerScale;
             case PlayerAirAccelerationKey:
                 return DefaultPlayerAirAcceleration;
+            case PlayerSpeedKey:
+                return DefaultPlayerSpeed;
             case BallKickForceKey:
                 return DefaultBallKickForce;
             case BallMaxSpeedKey:
@@ -163,6 +174,8 @@ public static class GameParameterDefinitions
                 return MinPlayerScale;
             case GameParameterId.PlayerAirAcceleration:
                 return MinPlayerAirAcceleration;
+            case GameParameterId.PlayerSpeed:
+                return MinPlayerSpeed;
             case GameParameterId.BallKickForce:
                 return MinBallKickForce;
             case GameParameterId.BallMaxLobAngle:
@@ -192,6 +205,8 @@ public static class GameParameterDefinitions
                 return MaxPlayerScale;
             case GameParameterId.PlayerAirAcceleration:
                 return MaxPlayerAirAcceleration;
+            case GameParameterId.PlayerSpeed:
+                return MaxPlayerSpeed;
             case GameParameterId.BallKickForce:
                 return MaxBallKickForce;
             case GameParameterId.BallMaxLobAngle:
@@ -218,6 +233,7 @@ public static class GameParameterDefinitions
         return key == PlayerGravityKey ||
             key == PlayerJumpKey ||
             key == PlayerScaleKey ||
-            key == PlayerAirAccelerationKey;
+            key == PlayerAirAccelerationKey ||
+            key == PlayerSpeedKey;
     }
 }
