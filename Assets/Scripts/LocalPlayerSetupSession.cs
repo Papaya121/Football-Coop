@@ -31,11 +31,12 @@ public static class LocalPlayerSetupSession
 
     public static bool TryAdd(FootballPlayerControlSource source, InputDevice device)
     {
-        if (IsConfirmed || IsReady || device == null || Contains(source, device))
+        if (IsConfirmed || IsReady ||
+            (device == null && source != FootballPlayerControlSource.Mobile) || Contains(source, device))
             return false;
 
         _sources[PlayerCount] = source;
-        _deviceIds[PlayerCount] = device.deviceId;
+        _deviceIds[PlayerCount] = device != null ? device.deviceId : 0;
         PlayerCount++;
         Changed?.Invoke();
         return true;
@@ -91,7 +92,7 @@ public static class LocalPlayerSetupSession
 
         source = _sources[index];
         device = InputSystem.GetDeviceById(_deviceIds[index]);
-        return device != null;
+        return source == FootballPlayerControlSource.Mobile || device != null;
     }
 
     public static void Clear()

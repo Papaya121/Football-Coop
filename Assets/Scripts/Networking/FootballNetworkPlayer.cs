@@ -23,6 +23,7 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     [SerializeField] private Material _rightTeamMaterial;
 
     [SyncVar(hook = nameof(OnTeamSideChanged))] private FootballTeamSide _teamSide;
+    [SyncVar(hook = nameof(OnNicknameChanged))] private string _nickname = "Player";
     [SyncVar] private Vector2 _presentationMoveInput;
     [SyncVar] private bool _presentationIsGrounded;
     [SyncVar] private bool _presentationIsJumping;
@@ -36,8 +37,11 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     private float _nextServerDiagnosticTime;
     private uint _serverMoveCommandCount;
     private bool _serverGameplayEnabled;
+    private PlayerProfileService _profileService;
+    private string _lastRequestedNickname;
 
     public FootballTeamSide TeamSide => _teamSide;
+    public string Nickname => _nickname;
 
     private void Awake()
     {
@@ -48,6 +52,7 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     {
         ResolveReferences();
         ApplyTeamVisuals(_teamSide);
+        _controller.TrySetNickname(_nickname);
         _controller.SetNetworkSimulationEnabled(true);
         SetLegacyInputEnabled(false);
         _controller.DoubleJumped += OnServerDoubleJumped;
@@ -68,6 +73,7 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     {
         ResolveReferences();
         ApplyTeamVisuals(_teamSide);
+        _controller.TrySetNickname(_nickname);
         SetLegacyInputEnabled(false);
 
         if (!isServer)
@@ -84,6 +90,9 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
     public override void OnStartLocalPlayer()
     {
+        _profileService = LocalPlayerProfile.Service;
+        _profileService.ProfileChanged += OnLocalProfileChanged;
+        OnLocalProfileChanged(_profileService.Profile);
         _input = new FootballInput();
         _input.Player.Jump.performed += OnJump;
         _input.Ball.Kick.started += OnKick;
@@ -102,6 +111,13 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
 
     public override void OnStopLocalPlayer()
     {
+        if (_profileService != null)
+        {
+            _profileService.ProfileChanged -= OnLocalProfileChanged;
+            _profileService = null;
+        }
+        _lastRequestedNickname = null;
+
         if (_input == null)
             return;
 
@@ -121,8 +137,41 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     public void ServerInitialize(FootballTeamSide teamSide)
     {
         _teamSide = teamSide;
+        ServerSetNickname(teamSide == FootballTeamSide.Left ? "Player 1" : "Player 2");
         ApplyTeamFacingDirection(teamSide);
         ApplyTeamVisuals(teamSide);
+    }
+
+    [Server]
+    public bool ServerSetNickname(string nickname)
+    {
+        if (!PlayerNickname.TryNormalize(nickname, out string normalized))
+            return false;
+
+        _nickname = normalized;
+        _controller?.TrySetNickname(normalized);
+        return true;
+    }
+
+    private void OnLocalProfileChanged(PlayerProfile profile)
+    {
+        if (_lastRequestedNickname == profile.Nickname)
+            return;
+
+        _lastRequestedNickname = profile.Nickname;
+        CmdSetNickname(profile.Nickname);
+    }
+
+    // Mirror's default authority check lets a client rename only its own player.
+    [Command]
+    private void CmdSetNickname(string nickname)
+    {
+        ServerSetNickname(nickname);
+    }
+
+    private void OnNicknameChanged(string _, string nickname)
+    {
+        _controller?.TrySetNickname(nickname);
     }
 
     [Server]

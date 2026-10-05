@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/PlayerNickname.cs" Link="PlayerNickname.cs" />
+    <Compile Include="../../Assets/Scripts/PlayerProfile.cs" Link="PlayerProfile.cs" />
+    <Compile Include="../../Assets/Scripts/PlayerProfileService.cs" Link="PlayerProfileService.cs" />
+    <Compile Include="../../Assets/Scripts/PlayerProfileRepository.cs" Link="PlayerProfileRepository.cs" />
+    <Compile Include="../../Assets/Scripts/PlayerRatingPolicy.cs" Link="PlayerRatingPolicy.cs" />
+    <Compile Include="../../Assets/Scripts/PlayerMatchOutcome.cs" Link="PlayerMatchOutcome.cs" />
+  </ItemGroup>
+</Project>

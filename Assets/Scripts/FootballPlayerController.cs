@@ -6,7 +6,8 @@ public enum FootballPlayerControlSource
 {
     WasdKeyboard,
     ArrowKeyboard,
-    Gamepad
+    Gamepad,
+    Mobile
 }
 
 [RequireComponent(typeof(Rigidbody))]
@@ -63,12 +64,16 @@ public sealed class FootballPlayerController : MonoBehaviour
     private bool _localInputSubscribed;
     private Vector3 _groundNormal = Vector3.up;
     private int _facingDirection = 1;
+    private FootballPlayerAnimator _playerAnimator;
     private float _gravity = GameParameterDefinitions.DefaultPlayerGravity;
     private float _scaleMultiplier = GameParameterDefinitions.DefaultPlayerScale;
+    private string _nickname = "Player";
 
     public event Action<FootballPlayerControlSource, InputDevice> InputAssigned;
     public event Action DoubleJumped;
+    public event Action<string> NicknameChanged;
 
+    public string Nickname => _nickname;
     public FootballPlayerControlSource ControlSource => _controlSource;
     public InputDevice ControlDevice => _controlDevice;
     public Vector2 MoveInput => _moveInput;
@@ -87,7 +92,7 @@ public sealed class FootballPlayerController : MonoBehaviour
         {
             _initialVisualScale = _visualRoot.localScale;
             _hasInitialVisualScale = true;
-            _facingDirection = (int)_visualRoot.localScale.x;
+            _facingDirection = _visualRoot.localScale.x >= 0f ? 1 : -1;
         }
 
         _defaultColliderCenter = _collider.center;
@@ -95,6 +100,20 @@ public sealed class FootballPlayerController : MonoBehaviour
 
         ConfigureRigidbody();
         ApplyGameParameters();
+    }
+
+    /// <summary>Assigns a local nickname; network players receive their name from the server.</summary>
+    public bool TrySetNickname(string nickname)
+    {
+        if (!PlayerNickname.TryNormalize(nickname, out string normalized))
+            return false;
+
+        if (_nickname == normalized)
+            return true;
+
+        _nickname = normalized;
+        NicknameChanged?.Invoke(_nickname);
+        return true;
     }
 
     public void AssignInput(FootballPlayerControlSource source, InputDevice device = null)
@@ -161,12 +180,16 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     public void SetFacingDirection(int direction)
     {
-        ApplyFacingDirection(direction);
+        // Spawn/team assignment is immediate and does not play a turn animation.
+        _playerAnimator?.CancelFacingRotation();
+        _facingDirection = direction >= 0 ? 1 : -1;
+        ApplyFacingVisual();
     }
 
     public void Respawn(Vector3 position, Quaternion rotation)
     {
         ResolveReferences();
+        _playerAnimator?.CancelFacingRotation();
 
         _moveInput = Vector2.zero;
         _coyoteTimer = 0f;
@@ -404,7 +427,7 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void UpdateJumpingState()
     {
-        if (_isJumping && _isGrounded && _rigidbody.linearVelocity.y <= 0.01f)
+        if (_isJumping && _isGrounded)
             _isJumping = false;
     }
 
@@ -437,13 +460,15 @@ public sealed class FootballPlayerController : MonoBehaviour
         _groundNormal = Vector3.up;
 
         Vector3 scale = transform.lossyScale;
-        Vector3 origin = transform.TransformPoint(_defaultColliderCenter);
+        // The jump capsule has a different bottom. Probing the standing capsule
+        // can start inside the floor after landing, which SphereCast cannot detect.
+        Vector3 origin = transform.TransformPoint(_collider.center);
 
         float radiusScale = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
         float heightScale = Mathf.Abs(scale.y);
 
         float radius = _collider.radius * radiusScale * _groundCheckRadiusMultiplier;
-        float height = Mathf.Max(_defaultColliderHeight * heightScale, radius * 2f);
+        float height = Mathf.Max(_collider.height * heightScale, radius * 2f);
         float distance = height * 0.5f - radius + _groundCheckDistance;
 
         PhysicsScene physicsScene = gameObject.scene.GetPhysicsScene();
@@ -460,6 +485,11 @@ public sealed class FootballPlayerController : MonoBehaviour
             return false;
 
         if (Vector3.Angle(hit.normal, Vector3.up) > _maxGroundAngle)
+            return false;
+
+        // A nearby surface is not support while a jump is moving away from it.
+        // Use its normal so moving uphill does not prevent landing/resetting jumps.
+        if (_isJumping && Vector3.Dot(_rigidbody.linearVelocity, hit.normal) > 0.01f)
             return false;
 
         _groundNormal = hit.normal;
@@ -495,8 +525,23 @@ public sealed class FootballPlayerController : MonoBehaviour
 
     private void ApplyFacingDirection(int direction)
     {
-        _facingDirection = direction >= 0 ? 1 : -1;
+        direction = direction >= 0 ? 1 : -1;
+        if (_facingDirection == direction)
+            return;
 
+        // Rotate is temporarily disabled; apply the requested facing immediately.
+        _facingDirection = direction;
+        if (_playerAnimator == null)
+            _playerAnimator = GetComponent<FootballPlayerAnimator>();
+
+        // if (_playerAnimator != null && _playerAnimator.TryBeginFacingRotation())
+        //     return;
+
+        ApplyFacingVisual();
+    }
+
+    public void ApplyFacingVisual()
+    {
         if (_visualRoot == null)
             return;
 

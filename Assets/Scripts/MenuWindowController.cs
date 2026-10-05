@@ -25,6 +25,11 @@ public sealed class MenuWindowController : MonoBehaviour
     [SerializeField] private CanvasGroup _localWindowGroup;
     [SerializeField] private CanvasGroup _multiplayerWindowGroup;
     [SerializeField] private CanvasGroup _matchmakingWindowGroup;
+    [SerializeField] private GameObject _settingsWindow;
+    [SerializeField] private CanvasGroup _settingsWindowGroup;
+    [SerializeField] private FootballSettingsWindow _settingsView;
+    [SerializeField] private Button _settingsButton;
+    [SerializeField] private Button _settingsBackButton;
 
     [Header("Window Transition")]
     [SerializeField, Min(0.01f)] private float _fadeOutDuration = 0.14f;
@@ -57,7 +62,7 @@ public sealed class MenuWindowController : MonoBehaviour
     private bool _isLocalSetupOpen;
     private FootballNetworkManager _networkManager;
     private readonly Dictionary<Graphic, Outline> _selectionOutlines = new();
-    private readonly HashSet<Button> _generatedNavigationButtons = new();
+    private readonly HashSet<Selectable> _generatedNavigationButtons = new();
     private Outline _selectedOutline;
     private Coroutine _selectionCoroutine;
     private Gamepad _preferredGamepad;
@@ -68,6 +73,7 @@ public sealed class MenuWindowController : MonoBehaviour
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = MenuFrameRate;
         ValidateReferences();
+        _localGameButton.gameObject.SetActive(!FootballInputPlatform.IsMobile);
         CacheViewData();
         BindButtons();
         _isLocalSetupOpen = false;
@@ -84,7 +90,7 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void Start()
     {
-        RequestSelection(_mainWindow, _localGameButton);
+        RequestSelection(_mainWindow, GetPreferredSelectable(_mainWindow));
     }
 
     private void OnDisable()
@@ -128,8 +134,8 @@ public sealed class MenuWindowController : MonoBehaviour
         }
 
         EventSystem eventSystem = EventSystem.current;
-        Button selected = eventSystem != null && eventSystem.currentSelectedGameObject != null
-            ? eventSystem.currentSelectedGameObject.GetComponent<Button>()
+        Selectable selected = eventSystem != null && eventSystem.currentSelectedGameObject != null
+            ? eventSystem.currentSelectedGameObject.GetComponent<Selectable>()
             : null;
 
         if (selected == null || !selected.IsInteractable() ||
@@ -138,7 +144,7 @@ public sealed class MenuWindowController : MonoBehaviour
             SetSelectedOutline(null);
 
             if (_selectionCoroutine == null && GamepadNavigationHeld())
-                RequestSelection(_visibleWindow, GetPreferredButton(_visibleWindow));
+                RequestSelection(_visibleWindow, GetPreferredSelectable(_visibleWindow));
 
             return;
         }
@@ -165,12 +171,13 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void CacheViewData()
     {
-        _windows = new[] { _mainWindow, _localWindow, _multiplayerWindow, _matchmakingWindow };
+        _windows = new[] { _mainWindow, _localWindow, _multiplayerWindow, _matchmakingWindow, _settingsWindow };
         _windowGroupCache.Clear();
         _windowGroupCache.Add(_mainWindow, _mainWindowGroup);
         _windowGroupCache.Add(_localWindow, _localWindowGroup);
         _windowGroupCache.Add(_multiplayerWindow, _multiplayerWindowGroup);
         _windowGroupCache.Add(_matchmakingWindow, _matchmakingWindowGroup);
+        _windowGroupCache.Add(_settingsWindow, _settingsWindowGroup);
 
         var labels = new List<TMP_Text>(LocalPlayerSetupSession.PlayerCapacity);
 
@@ -186,6 +193,8 @@ public sealed class MenuWindowController : MonoBehaviour
 
     private void BindButtons()
     {
+        _settingsButton.onClick.AddListener(OpenSettings);
+        _settingsBackButton.onClick.AddListener(CloseSettings);
         _localGameButton.onClick.AddListener(OpenLocalSetup);
         _aiButton.onClick.AddListener(StartAiGame);
         _onlineButton.onClick.AddListener(OpenMultiplayer);
@@ -199,8 +208,23 @@ public sealed class MenuWindowController : MonoBehaviour
         _matchmakingBackButton.onClick.AddListener(CancelMatchmaking);
     }
 
+    public void OpenSettings()
+    {
+        _isLocalSetupOpen = false;
+        ShowOnly(_settingsWindow);
+    }
+
+    public void CloseSettings()
+    {
+        _settingsView.CommitNickname();
+        ShowMainWindow();
+    }
+
     private void OpenLocalSetup()
     {
+        if (FootballInputPlatform.IsMobile)
+            return;
+
         FootballAnalytics.MenuButton(FootballAnalytics.PressButtonPlay);
         LocalPlayerSetupSession.Clear();
         ShowOnly(_localWindow);
@@ -246,7 +270,12 @@ public sealed class MenuWindowController : MonoBehaviour
         InputDevice device;
         Gamepad selectedGamepad = GetSubmittingGamepad() ?? _preferredGamepad;
 
-        if (selectedGamepad != null && selectedGamepad.added)
+        if (FootballInputPlatform.IsMobile)
+        {
+            source = FootballPlayerControlSource.Mobile;
+            device = null;
+        }
+        else if (selectedGamepad != null && selectedGamepad.added)
         {
             source = FootballPlayerControlSource.Gamepad;
             device = selectedGamepad;
@@ -390,7 +419,7 @@ public sealed class MenuWindowController : MonoBehaviour
                 if (incomingGroup != null && _visibleWindow == window)
                 {
                     SetWindowInteraction(incomingGroup, true);
-                    RequestSelection(window, GetPreferredButton(window));
+                    RequestSelection(window, GetPreferredSelectable(window));
                 }
 
                 _windowTransition = null;
@@ -444,11 +473,11 @@ public sealed class MenuWindowController : MonoBehaviour
         if (_networkManager == null)
             return;
 
-        _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
+        _networkManager.MatchmakingStatusChanged -= OnNetworkStatusChanged;
         _networkManager.MatchLoading -= HideMenuWindows;
         _networkManager.ReturnedToMenu -= ShowMultiplayer;
         _networkManager.AiFallbackRequested -= StartAiFallbackGame;
-        _networkManager.MatchmakingStatusChanged += SetMatchmakingStatus;
+        _networkManager.MatchmakingStatusChanged += OnNetworkStatusChanged;
         _networkManager.MatchLoading += HideMenuWindows;
         _networkManager.ReturnedToMenu += ShowMultiplayer;
         _networkManager.AiFallbackRequested += StartAiFallbackGame;
@@ -459,7 +488,7 @@ public sealed class MenuWindowController : MonoBehaviour
         if (_networkManager == null)
             return;
 
-        _networkManager.MatchmakingStatusChanged -= SetMatchmakingStatus;
+        _networkManager.MatchmakingStatusChanged -= OnNetworkStatusChanged;
         _networkManager.MatchLoading -= HideMenuWindows;
         _networkManager.ReturnedToMenu -= ShowMultiplayer;
         _networkManager.AiFallbackRequested -= StartAiFallbackGame;
@@ -474,7 +503,13 @@ public sealed class MenuWindowController : MonoBehaviour
     private void SetMatchmakingStatus(string status)
     {
         if (_matchmakingStatusText != null)
-            _matchmakingStatusText.text = status;
+            FootballLocalization.SetText(_matchmakingStatusText, status);
+    }
+
+    private void OnNetworkStatusChanged(string status)
+    {
+        FootballLocalization.SetText(_matchmakingStatusText,
+            _networkManager.ClientStatusSource, _networkManager.ClientStatusArguments);
     }
 
     private void HideMenuWindows()
@@ -501,9 +536,9 @@ public sealed class MenuWindowController : MonoBehaviour
         for (int i = 0; i < _deviceLabels.Length; i++)
         {
             if (!LocalPlayerSetupSession.TryGetPlayer(i, out FootballPlayerControlSource source, out _))
-                _deviceLabels[i].text = "Нажмите\nклавишу";
+                FootballLocalization.SetText(_deviceLabels[i], "Нажмите\nклавишу");
             else
-                _deviceLabels[i].text = GetSourceLabel(source);
+                FootballLocalization.SetText(_deviceLabels[i], GetSourceLabel(source));
         }
     }
 
@@ -556,7 +591,7 @@ public sealed class MenuWindowController : MonoBehaviour
         }
     }
 
-    private void RequestSelection(GameObject window, Button preferred)
+    private void RequestSelection(GameObject window, Selectable preferred)
     {
         if (_selectionCoroutine != null)
             StopCoroutine(_selectionCoroutine);
@@ -564,7 +599,7 @@ public sealed class MenuWindowController : MonoBehaviour
         _selectionCoroutine = StartCoroutine(SelectWindowButtonNextFrame(window, preferred));
     }
 
-    private IEnumerator SelectWindowButtonNextFrame(GameObject window, Button preferred)
+    private IEnumerator SelectWindowButtonNextFrame(GameObject window, Selectable preferred)
     {
         yield return null;
         _selectionCoroutine = null;
@@ -579,15 +614,15 @@ public sealed class MenuWindowController : MonoBehaviour
             yield break;
 
         Canvas.ForceUpdateCanvases();
-        List<Button> buttons = new();
+        List<Selectable> buttons = new();
 
-        foreach (Button button in window.GetComponentsInChildren<Button>(false))
+        foreach (Selectable button in window.GetComponentsInChildren<Selectable>(false))
         {
             if (button.gameObject.activeInHierarchy && button.IsInteractable())
                 buttons.Add(button);
         }
 
-        foreach (Button button in buttons)
+        foreach (Selectable button in buttons)
         {
             Navigation navigation = button.navigation;
 
@@ -614,7 +649,7 @@ public sealed class MenuWindowController : MonoBehaviour
             SetGeneratedVerticalNeighbor(_localGameButton, _tutorialButton, false);
         }
 
-        Button firstSelection = preferred != null && buttons.Contains(preferred)
+        Selectable firstSelection = preferred != null && buttons.Contains(preferred)
             ? preferred
             : buttons.Count > 0 ? buttons[0] : null;
 
@@ -622,13 +657,13 @@ public sealed class MenuWindowController : MonoBehaviour
             eventSystem.SetSelectedGameObject(firstSelection.gameObject);
     }
 
-    private static Button FindDirectionalButton(Button source, List<Button> buttons, Vector2 direction)
+    private static Selectable FindDirectionalButton(Selectable source, List<Selectable> buttons, Vector2 direction)
     {
         Vector2 origin = GetButtonCenter(source);
-        Button nearest = null;
+        Selectable nearest = null;
         float bestScore = float.PositiveInfinity;
 
-        foreach (Button candidate in buttons)
+        foreach (Selectable candidate in buttons)
         {
             if (candidate == source)
                 continue;
@@ -657,7 +692,7 @@ public sealed class MenuWindowController : MonoBehaviour
 
         // The menu has separate button columns. When a column ends, Up/Down
         // should still reach the closest row above or below in another column.
-        foreach (Button candidate in buttons)
+        foreach (Selectable candidate in buttons)
         {
             if (candidate == source)
                 continue;
@@ -695,7 +730,7 @@ public sealed class MenuWindowController : MonoBehaviour
         source.navigation = navigation;
     }
 
-    private static Vector2 GetButtonCenter(Button button)
+    private static Vector2 GetButtonCenter(Selectable button)
     {
         if (button.transform is RectTransform rectTransform)
             return rectTransform.TransformPoint(rectTransform.rect.center);
@@ -703,16 +738,18 @@ public sealed class MenuWindowController : MonoBehaviour
         return button.transform.position;
     }
 
-    private Button GetPreferredButton(GameObject window)
+    private Selectable GetPreferredSelectable(GameObject window)
     {
         if (window == _mainWindow)
-            return _localGameButton;
+            return FootballInputPlatform.IsMobile ? _aiButton : _localGameButton;
         if (window == _localWindow)
             return LocalPlayerSetupSession.IsReady ? _startButton : _localBackButton;
         if (window == _multiplayerWindow)
             return _matchmakingButton;
         if (window == _matchmakingWindow)
             return _matchmakingBackButton;
+        if (window == _settingsWindow)
+            return _settingsView.PreferredSelection;
         return null;
     }
 
@@ -796,11 +833,15 @@ public sealed class MenuWindowController : MonoBehaviour
             CancelMatchmaking();
         else if (_visibleWindow == _multiplayerWindow)
             BackToMain();
+        else if (_visibleWindow == _settingsWindow)
+            CloseSettings();
     }
 
     private void ValidateReferences()
     {
-        if (_mainWindow == null || _localWindow == null || _multiplayerWindow == null ||
+        if (_settingsWindow == null || _settingsWindowGroup == null || _settingsView == null ||
+            _settingsButton == null || _settingsBackButton == null ||
+            _mainWindow == null || _localWindow == null || _multiplayerWindow == null ||
             _matchmakingWindow == null || _mainWindowGroup == null || _localWindowGroup == null ||
             _multiplayerWindowGroup == null || _matchmakingWindowGroup == null ||
             _localGameButton == null || _aiButton == null ||
@@ -833,6 +874,11 @@ public sealed class MenuWindowController : MonoBehaviour
         _localWindow ??= transform.Find("Local Window")?.gameObject;
         _multiplayerWindow ??= transform.Find("Multiplayer Window")?.gameObject;
         _matchmakingWindow ??= transform.Find("Matchmaking Window")?.gameObject;
+        _settingsWindow ??= transform.Find("Settings")?.gameObject;
+        _settingsWindowGroup ??= _settingsWindow != null ? _settingsWindow.GetComponent<CanvasGroup>() : null;
+        _settingsView ??= _settingsWindow != null ? _settingsWindow.GetComponent<FootballSettingsWindow>() : null;
+        _settingsButton ??= FindOptionalButton(_mainWindow?.transform, "Settings Button");
+        _settingsBackButton ??= _settingsWindow != null ? _settingsWindow.transform.Find("Button")?.GetComponent<Button>() : null;
         _mainWindowGroup ??= _mainWindow != null ? _mainWindow.GetComponent<CanvasGroup>() : null;
         _localWindowGroup ??= _localWindow != null ? _localWindow.GetComponent<CanvasGroup>() : null;
         _multiplayerWindowGroup ??= _multiplayerWindow != null ? _multiplayerWindow.GetComponent<CanvasGroup>() : null;

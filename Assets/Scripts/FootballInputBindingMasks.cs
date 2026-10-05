@@ -9,6 +9,7 @@ public static class FootballInputBindingMasks
             FootballPlayerControlSource.WasdKeyboard => InputBinding.MaskByGroup("WASD"),
             FootballPlayerControlSource.ArrowKeyboard => InputBinding.MaskByGroup("Arrows"),
             FootballPlayerControlSource.Gamepad => InputBinding.MaskByGroup("Gamepad"),
+            FootballPlayerControlSource.Mobile => InputBinding.MaskByGroup("Gamepad"),
             _ => null
         };
     }

@@ -18,6 +18,8 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
 
     private InputAction _restartAction;
     private int _assignedPlayerCount;
+    private PlayerProfileService _profileService;
+    private string _profileNickname;
 
     public event Action<int> PlayerCountChanged;
 
@@ -70,11 +72,26 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
     private void OnEnable()
     {
         _restartAction?.Enable();
+        _profileService = LocalPlayerProfile.Service;
+        _profileService.ProfileChanged += OnProfileChanged;
+        OnProfileChanged(_profileService.Profile);
     }
 
     private void OnDisable()
     {
         _restartAction?.Disable();
+        if (_profileService != null)
+            _profileService.ProfileChanged -= OnProfileChanged;
+    }
+
+    private void OnProfileChanged(PlayerProfile profile)
+    {
+        if (_profileNickname == profile.Nickname)
+            return;
+
+        _profileNickname = profile.Nickname;
+        if (_assignedPlayerCount > 0 && _players.Length > 0 && _players[0] != null)
+            _players[0].TrySetNickname(profile.Nickname);
     }
 
     private void OnDestroy()
@@ -101,6 +118,9 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
 
     private void TrySwitchAiHumanInput()
     {
+        if (FootballInputPlatform.IsMobile)
+            return;
+
         if (_assignedPlayerCount == 0 || _players.Length == 0)
             return;
 
@@ -184,6 +204,9 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
 
         _assignedSources[_assignedPlayerCount] = source;
         _assignedDevices[_assignedPlayerCount] = device;
+        player.TrySetNickname(_assignedPlayerCount == 0
+            ? LocalPlayerProfile.Service.Profile.Nickname
+            : $"Player {_assignedPlayerCount + 1}");
         _assignedPlayerCount++;
 
         player.enabled = true;
@@ -223,6 +246,7 @@ public sealed class FootballPlayerJoinManager : MonoBehaviour
         }
 
         botPlayer.enabled = true;
+        botPlayer.TrySetNickname("Bot");
         botPlayer.SetExternalControlEnabled(true);
         botPlayer.SetFacingDirection(-1);
 

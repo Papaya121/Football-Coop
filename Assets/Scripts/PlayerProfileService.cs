@@ -23,6 +23,21 @@ public sealed class PlayerProfileService
 
     public PlayerProfile Profile => _profile ??= LoadOrCreateProfile();
 
+    /// <summary>Assigns or changes the nickname, saves it and notifies profile consumers.</summary>
+    public bool TrySetNickname(string nickname)
+    {
+        if (!PlayerNickname.TryNormalize(nickname, out string normalized))
+            return false;
+
+        if (Profile.Nickname == normalized)
+            return true;
+
+        Profile.TrySetNickname(normalized);
+        _repository.Save(Profile);
+        ProfileChanged?.Invoke(Profile);
+        return true;
+    }
+
     public int RecordMatch(PlayerMatchOutcome outcome)
     {
         int delta = _ratingPolicy.GetRatingDelta(outcome);

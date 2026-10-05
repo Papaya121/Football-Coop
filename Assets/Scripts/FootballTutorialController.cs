@@ -93,8 +93,17 @@ public sealed class FootballTutorialController : MonoBehaviour
         }
     }
 
+    private void OnEnable() => FootballLocalization.LanguageChanged += RefreshLanguage;
+
+    private void RefreshLanguage()
+    {
+        if (_currentStepIndex >= 0)
+            RefreshStep(_steps[_currentStepIndex], _currentStepIndex);
+    }
+
     private void OnDisable()
     {
+        FootballLocalization.LanguageChanged -= RefreshLanguage;
         if (_player != null)
             _player.InputAssigned -= OnInputAssigned;
 
@@ -306,8 +315,9 @@ public sealed class FootballTutorialController : MonoBehaviour
 
     private void RefreshStep(TutorialStep step, int index)
     {
-        _titleText.text = step.Title;
-        _contentText.text = FormatControls(step.Text) + "\n\n<size=55%><color=#A9A9A9>Esc / Menu — пропустить обучение</color></size>";
+        FootballLocalization.SetText(_titleText, step.Title);
+        FootballLocalization.SetText(_contentText, FormatControls(FootballLocalization.Localize(step.Text)) +
+            FootballLocalization.Localize("\n\n<size=55%><color=#A9A9A9>Esc / Menu — пропустить обучение</color></size>"));
     }
 
     private string FormatControls(string text)
@@ -330,7 +340,7 @@ public sealed class FootballTutorialController : MonoBehaviour
             ? _player.ControlSource
             : FootballPlayerControlSource.WasdKeyboard;
 
-        if (source == FootballPlayerControlSource.Gamepad)
+        if (source == FootballPlayerControlSource.Gamepad || source == FootballPlayerControlSource.Mobile)
         {
             Gamepad gamepad = _player?.ControlDevice as Gamepad ?? Gamepad.current;
             if (gamepad == null)
@@ -444,10 +454,11 @@ public sealed class FootballTutorialController : MonoBehaviour
             throw new MissingReferenceException("Learning Window must contain CanvasGroup, Learning Panel, Title Text and Content Text.");
     }
 
-    private static string ControlLabel(string label) => $"<color=#94D86A><b>[ {label} ]</b></color>";
+    private static string ControlLabel(string label) => $"<color=#94D86A><b>[ {FootballLocalization.Localize(label)} ]</b></color>";
 
     private static string GetMoveLabel(FootballPlayerControlSource source) => source switch
     {
+        FootballPlayerControlSource.Mobile => "←  →",
         FootballPlayerControlSource.ArrowKeyboard => "←  →",
         FootballPlayerControlSource.Gamepad => "ЛЕВЫЙ СТИК",
         _ => "A  D"
@@ -455,6 +466,7 @@ public sealed class FootballTutorialController : MonoBehaviour
 
     private string GetJumpLabel(FootballPlayerControlSource source) => source switch
     {
+        FootballPlayerControlSource.Mobile => FootballLocalization.Get("mobile.jump"),
         FootballPlayerControlSource.ArrowKeyboard => "RIGHT SHIFT",
         FootballPlayerControlSource.Gamepad => IsPlayStationGamepad() ? "✕" : "A",
         _ => "SPACE"
@@ -462,6 +474,7 @@ public sealed class FootballTutorialController : MonoBehaviour
 
     private string GetKickLabel(FootballPlayerControlSource source) => source switch
     {
+        FootballPlayerControlSource.Mobile => FootballLocalization.Get("mobile.kick"),
         FootballPlayerControlSource.ArrowKeyboard => "[",
         FootballPlayerControlSource.Gamepad => IsPlayStationGamepad() ? "○" : "B",
         _ => "K"
@@ -469,6 +482,7 @@ public sealed class FootballTutorialController : MonoBehaviour
 
     private string GetHeaderLabel(FootballPlayerControlSource source) => source switch
     {
+        FootballPlayerControlSource.Mobile => FootballLocalization.Get("mobile.header"),
         FootballPlayerControlSource.ArrowKeyboard => "]",
         FootballPlayerControlSource.Gamepad => IsPlayStationGamepad() ? "△" : "Y",
         _ => "J"
@@ -476,6 +490,9 @@ public sealed class FootballTutorialController : MonoBehaviour
 
     private string GetBackLabel(FootballPlayerControlSource source)
     {
+        if (source == FootballPlayerControlSource.Mobile)
+            return _player == null || _player.FacingDirection >= 0 ? "←" : "→";
+
         if (source == FootballPlayerControlSource.Gamepad)
             return "СТИК НАЗАД";
 

@@ -1,11 +1,13 @@
 using System.Collections;
 using ObjectPool;
 using UnityEngine;
+using UnityEngine.Audio;
 
 [DisallowMultipleComponent]
 public sealed class FootballSoundPlayer : MonoBehaviour
 {
     [SerializeField] private FootballSoundCatalog _catalog;
+    [SerializeField] private AudioMixerGroup _outputMixerGroup;
     [SerializeField, Min(0)] private int _preloadCount = 12;
     [SerializeField, Range(0f, 1f)] private float _masterVolume = 1f;
     [SerializeField, Range(0f, 1f)] private float _spatialBlend = 1f;
@@ -16,6 +18,7 @@ public sealed class FootballSoundPlayer : MonoBehaviour
 
     private GameObjectPool _pool;
     private GameObject _runtimePrefab;
+    private AudioMixerGroup _resolvedMixerGroup;
 
     public static FootballSoundPlayer Instance => _instance;
 
@@ -60,6 +63,7 @@ public sealed class FootballSoundPlayer : MonoBehaviour
         sourceObject.transform.SetParent(transform, true);
 
         AudioSource source = sourceObject.GetComponent<AudioSource>();
+        source.outputAudioMixerGroup = _resolvedMixerGroup;
         source.clip = clip;
         source.volume = Mathf.Clamp01(_masterVolume * entryVolume * volumeMultiplier);
         source.spatialBlend = _spatialBlend;
@@ -75,6 +79,10 @@ public sealed class FootballSoundPlayer : MonoBehaviour
     {
         if (_pool != null)
             return;
+
+        _resolvedMixerGroup = _outputMixerGroup != null
+            ? _outputMixerGroup
+            : FootballAudioMixer.GetGroup(FootballAudioChannel.SFX);
 
         _runtimePrefab = new GameObject("Pooled Football AudioSource");
         _runtimePrefab.SetActive(false);

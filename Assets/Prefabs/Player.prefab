@@ -122,7 +122,7 @@ MonoBehaviour:
   _jumpBufferTime: 0.1
   _groundCheckDistance: 0.08
   _groundCheckRadiusMultiplier: 0.9
-  _maxGroundAngle: 60
+  _maxGroundAngle: 40
   _jumpColliderCenter: {x: 0, y: 1.73, z: 0}
   _jumpColliderHeight: 1.57
   _colliderResizeSpeed: 6
@@ -143,6 +143,10 @@ MonoBehaviour:
   _bicycleKicker: {fileID: 6932915085668317244}
   _header: {fileID: 4251739061579830641}
   _animator: {fileID: 6313373953023282358}
+  _rotateStatePath: Base Layer.Rotate
+  _rotateLayer: 0
+  _rotateEntryTimeout: 1
+  _rotatePoseBlendDuration: 0.15
   _kickAnimationTriggerMode: 1
   _bicycleKickAnimationTriggerMode: 1
   _headerAnimationTriggerMode: 1
@@ -929,7 +933,7 @@ Animator:
   m_GameObject: {fileID: 4774188138475336700}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 90d8f936789cd4ba5946a0c1d2aa8de6, type: 3}
-  m_Controller: {fileID: 9100000, guid: 9601cd22fc5e745e4b06173c19d03462, type: 2}
+  m_Controller: {fileID: 9100000, guid: 76b058c04545bed4b8690309b90679dc, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

@@ -54,6 +54,7 @@ public sealed class FootballMatchResultModal : MonoBehaviour
 
         _instance = this;
         DontDestroyOnLoad(gameObject);
+        FootballLocalization.BindHierarchy(gameObject);
     }
 
     private void OnDestroy()
@@ -122,15 +123,15 @@ public sealed class FootballMatchResultModal : MonoBehaviour
             gameObject.AddComponent<GraphicRaycaster>();
 
         if (_outcomeText != null)
-            _outcomeText.text = outcome switch
+            FootballLocalization.SetText(_outcomeText, outcome switch
             {
                 PlayerMatchOutcome.Victory => "Победа",
                 PlayerMatchOutcome.Draw => "Ничья",
                 _ => "Поражение"
-            };
+            });
 
         if (_ratingText != null)
-            _ratingText.text = $"Рейтинг: {previousRating} → {newRating}";
+            FootballLocalization.SetText(_ratingText, "Рейтинг: {0} → {1}", previousRating, newRating);
 
         if (_victoryVisual != null)
             _victoryVisual.SetActive(outcome == PlayerMatchOutcome.Victory);
@@ -209,7 +210,7 @@ public sealed class FootballMatchResultModal : MonoBehaviour
         modal._continueButton = buttonRect.gameObject.AddComponent<Button>();
         TMP_Text buttonText = CreateText("Button Text", buttonRect, Vector2.zero,
             new Vector2(240f, 60f), 28f);
-        buttonText.text = "Продолжить";
+        FootballLocalization.SetText(buttonText, "Продолжить");
 
         return modal;
     }

@@ -134,7 +134,7 @@ public sealed class FootballNetworkMatchExitButton : MonoBehaviour
     private void SetLabel(string value)
     {
         if (_label != null)
-            _label.text = value;
+            FootballLocalization.SetText(_label, value);
     }
 
     private void ResolveReferences()

@@ -1,0 +1,753 @@
+{
+  "defaultLanguage": "ru",
+  "languages": [
+    "ru",
+    "en"
+  ],
+  "entries": [
+    {
+      "key": "menu.ai",
+      "source": "Против компьютера",
+      "values": [
+        "Против компьютера",
+        "Against the computer"
+      ]
+    },
+    {
+      "key": "menu.choose_mode",
+      "source": "Выберите метод игры",
+      "values": [
+        "Выберите метод игры",
+        "Choose a game mode"
+      ]
+    },
+    {
+      "key": "menu.ai_title",
+      "source": "Игра против ИИ",
+      "values": [
+        "Игра против ИИ",
+        "Play against AI"
+      ]
+    },
+    {
+      "key": "menu.back",
+      "source": "Назад",
+      "values": [
+        "Назад",
+        "Back"
+      ]
+    },
+    {
+      "key": "menu.exit",
+      "source": "Выйти",
+      "values": [
+        "Выйти",
+        "Exit"
+      ]
+    },
+    {
+      "key": "menu.start",
+      "source": "Начать",
+      "values": [
+        "Начать",
+        "Start"
+      ]
+    },
+    {
+      "key": "menu.local",
+      "source": "Локальная игра",
+      "values": [
+        "Локальная игра",
+        "Local game"
+      ]
+    },
+    {
+      "key": "menu.network_title",
+      "source": "Игра по сети",
+      "values": [
+        "Игра по сети",
+        "Online game"
+      ]
+    },
+    {
+      "key": "menu.cancel",
+      "source": "Отмена",
+      "values": [
+        "Отмена",
+        "Cancel"
+      ]
+    },
+    {
+      "key": "menu.unavailable",
+      "source": "Недоступно",
+      "values": [
+        "Недоступно",
+        "Unavailable"
+      ]
+    },
+    {
+      "key": "menu.find_match",
+      "source": "Поиск матча",
+      "values": [
+        "Поиск матча",
+        "Find match"
+      ]
+    },
+    {
+      "key": "menu.tutorial",
+      "source": "Обучение",
+      "values": [
+        "Обучение",
+        "Tutorial"
+      ]
+    },
+    {
+      "key": "menu.waiting_initial",
+      "source": "В поиске 0 игроков",
+      "values": [
+        "В поиске 0 игроков",
+        "Searching: 0 players"
+      ]
+    },
+    {
+      "key": "menu.play",
+      "source": "иГРА",
+      "values": [
+        "иГРА",
+        "PLAY"
+      ]
+    },
+    {
+      "key": "menu.online",
+      "source": "Онлайн",
+      "values": [
+        "Онлайн",
+        "Online"
+      ]
+    },
+    {
+      "key": "menu.press_key",
+      "source": "Нажмите любую клавишу",
+      "values": [
+        "Нажмите любую клавишу",
+        "Press any key"
+      ]
+    },
+    {
+      "key": "menu.shop",
+      "source": "Магазин",
+      "values": [
+        "Магазин",
+        "Shop"
+      ]
+    },
+    {
+      "key": "menu.daily_login",
+      "source": "Ежедневный\nвход",
+      "values": [
+        "Ежедневный\nвход",
+        "Daily\nlogin"
+      ]
+    },
+    {
+      "key": "menu.rating",
+      "source": "Рейтинг",
+      "values": [
+        "Рейтинг",
+        "Rating"
+      ]
+    },
+    {
+      "key": "input.press_key",
+      "source": "Нажмите\nклавишу",
+      "values": [
+        "Нажмите\nклавишу",
+        "Press\na key"
+      ]
+    },
+    {
+      "key": "input.keyboard",
+      "source": "Keyboard",
+      "values": [
+        "Клавиатура",
+        "Keyboard"
+      ]
+    },
+    {
+      "key": "input.wasd",
+      "source": "Keyboard\nWASD",
+      "values": [
+        "Клавиатура\nWASD",
+        "Keyboard\nWASD"
+      ]
+    },
+    {
+      "key": "input.arrows",
+      "source": "Keyboard\n← → ↑ ↓",
+      "values": [
+        "Клавиатура\n← → ↑ ↓",
+        "Keyboard\n← → ↑ ↓"
+      ]
+    },
+    {
+      "key": "input.arrows_compact",
+      "source": "Keyboard\n←→↑↓",
+      "values": [
+        "Клавиатура\n←→↑↓",
+        "Keyboard\n←→↑↓"
+      ]
+    },
+    {
+      "key": "input.gamepad",
+      "source": "Gamepad",
+      "values": [
+        "Геймпад",
+        "Gamepad"
+      ]
+    },
+    {
+      "key": "input.player1",
+      "source": "Player 1",
+      "values": [
+        "Игрок 1",
+        "Player 1"
+      ]
+    },
+    {
+      "key": "input.player2",
+      "source": "Player 2",
+      "values": [
+        "Игрок 2",
+        "Player 2"
+      ]
+    },
+    {
+      "key": "mobile.kick",
+      "source": "Leg",
+      "values": [
+        "Удар",
+        "Kick"
+      ]
+    },
+    {
+      "key": "mobile.header",
+      "source": "Head",
+      "values": [
+        "Головой",
+        "Header"
+      ]
+    },
+    {
+      "key": "mobile.jump",
+      "source": "Jump",
+      "values": [
+        "Прыжок",
+        "Jump"
+      ]
+    },
+    {
+      "key": "match.press_button",
+      "source": "Нажмите любую кнопку",
+      "values": [
+        "Нажмите любую кнопку",
+        "Press any button"
+      ]
+    },
+    {
+      "key": "match.waiting",
+      "source": "Ожидание второго игрока",
+      "values": [
+        "Ожидание второго игрока",
+        "Waiting for the second player"
+      ]
+    },
+    {
+      "key": "match.goal_blue",
+      "source": "<color=#65A5AC>Гол!</color>",
+      "values": [
+        "<color=#65A5AC>Гол!</color>",
+        "<color=#65A5AC>Goal!</color>"
+      ]
+    },
+    {
+      "key": "match.goal_red",
+      "source": "<color=#C34A4A>Гол!</color>",
+      "values": [
+        "<color=#C34A4A>Гол!</color>",
+        "<color=#C34A4A>Goal!</color>"
+      ]
+    },
+    {
+      "key": "match.blue_wins",
+      "source": "Матч закончен!\n<color=#65A5AC>Синий</color> победил!",
+      "values": [
+        "Матч закончен!\n<color=#65A5AC>Синий</color> победил!",
+        "Match over!\n<color=#65A5AC>Blue</color> wins!"
+      ]
+    },
+    {
+      "key": "match.red_wins",
+      "source": "Матч закончен!\n<color=#C34A4A>Красный</color> победил!",
+      "values": [
+        "Матч закончен!\n<color=#C34A4A>Красный</color> победил!",
+        "Match over!\n<color=#C34A4A>Red</color> wins!"
+      ]
+    },
+    {
+      "key": "match.draw",
+      "source": "Матч закончен!\nНичья!",
+      "values": [
+        "Матч закончен!\nНичья!",
+        "Match over!\nDraw!"
+      ]
+    },
+    {
+      "key": "match.victory",
+      "source": "Матч закончен!\nВы победили!",
+      "values": [
+        "Матч закончен!\nВы победили!",
+        "Match over!\nYou won!"
+      ]
+    },
+    {
+      "key": "match.defeat",
+      "source": "Матч закончен!\nВы проиграли!",
+      "values": [
+        "Матч закончен!\nВы проиграли!",
+        "Match over!\nYou lost!"
+      ]
+    },
+    {
+      "key": "match.give_up",
+      "source": "Сдаться",
+      "values": [
+        "Сдаться",
+        "Give up"
+      ]
+    },
+    {
+      "key": "result.victory",
+      "source": "Победа",
+      "values": [
+        "Победа",
+        "Victory"
+      ]
+    },
+    {
+      "key": "result.draw",
+      "source": "Ничья",
+      "values": [
+        "Ничья",
+        "Draw"
+      ]
+    },
+    {
+      "key": "result.defeat",
+      "source": "Поражение",
+      "values": [
+        "Поражение",
+        "Defeat"
+      ]
+    },
+    {
+      "key": "result.rating",
+      "source": "Рейтинг: {0} → {1}",
+      "values": [
+        "Рейтинг: {0} → {1}",
+        "Rating: {0} → {1}"
+      ]
+    },
+    {
+      "key": "result.close",
+      "source": "Закрыть",
+      "values": [
+        "Закрыть",
+        "Close"
+      ]
+    },
+    {
+      "key": "result.continue",
+      "source": "Продолжить",
+      "values": [
+        "Продолжить",
+        "Continue"
+      ]
+    },
+    {
+      "key": "network.not_configured",
+      "source": "Сетевой менеджер не настроен",
+      "values": [
+        "Сетевой менеджер не настроен",
+        "Network manager is not configured"
+      ]
+    },
+    {
+      "key": "network.connecting",
+      "source": "Подключение",
+      "values": [
+        "Подключение",
+        "Connecting"
+      ]
+    },
+    {
+      "key": "network.finishing_session",
+      "source": "Завершение предыдущей сетевой сессии…",
+      "values": [
+        "Завершение предыдущей сетевой сессии…",
+        "Closing the previous network session…"
+      ]
+    },
+    {
+      "key": "network.server_only",
+      "source": "Сервер запущен. Подключите отдельный клиент.",
+      "values": [
+        "Сервер запущен. Подключите отдельный клиент.",
+        "Server started. Connect a separate client."
+      ]
+    },
+    {
+      "key": "network.searching",
+      "source": "Поиск матча…",
+      "values": [
+        "Поиск матча…",
+        "Searching for a match…"
+      ]
+    },
+    {
+      "key": "network.cancelled",
+      "source": "Поиск отменён",
+      "values": [
+        "Поиск отменён",
+        "Search cancelled"
+      ]
+    },
+    {
+      "key": "network.unavailable_fallback",
+      "source": "Сервер недоступен. Запуск матча с ботом…",
+      "values": [
+        "Сервер недоступен. Запуск матча с ботом…",
+        "Server unavailable. Starting a match against a bot…"
+      ]
+    },
+    {
+      "key": "network.disconnected",
+      "source": "Соединение с сервером закрыто",
+      "values": [
+        "Соединение с сервером закрыто",
+        "Disconnected from the server"
+      ]
+    },
+    {
+      "key": "network.error",
+      "source": "Ошибка сети: {0}",
+      "values": [
+        "Ошибка сети: {0}",
+        "Network error: {0}"
+      ]
+    },
+    {
+      "key": "network.scene_failed",
+      "source": "Не удалось загрузить сцену матча.",
+      "values": [
+        "Не удалось загрузить сцену матча.",
+        "Could not load the match scene."
+      ]
+    },
+    {
+      "key": "network.queue",
+      "source": "В поиске: {0} игрок(а)",
+      "values": [
+        "В поиске: {0} игрок(а)",
+        "Searching: {0} player(s)"
+      ]
+    },
+    {
+      "key": "network.found",
+      "source": "Матч найден. Загрузка…",
+      "values": [
+        "Матч найден. Загрузка…",
+        "Match found. Loading…"
+      ]
+    },
+    {
+      "key": "network.finished",
+      "source": "Матч завершён",
+      "values": [
+        "Матч завершён",
+        "Match finished"
+      ]
+    },
+    {
+      "key": "network.connection_fallback",
+      "source": "Не удалось подключиться к серверу. Запуск матча с ботом…",
+      "values": [
+        "Не удалось подключиться к серверу. Запуск матча с ботом…",
+        "Could not connect to the server. Starting a match against a bot…"
+      ]
+    },
+    {
+      "key": "network.opponent_fallback",
+      "source": "Соперник не найден. Запуск матча с ботом…",
+      "values": [
+        "Соперник не найден. Запуск матча с ботом…",
+        "No opponent found. Starting a match against a bot…"
+      ]
+    },
+    {
+      "key": "tutorial.move_title",
+      "source": "ДВИЖЕНИЕ",
+      "values": [
+        "ДВИЖЕНИЕ",
+        "MOVEMENT"
+      ]
+    },
+    {
+      "key": "tutorial.move",
+      "source": "Нажмите {move}, чтобы двигаться и развернуться.",
+      "values": [
+        "Нажмите {move}, чтобы двигаться и развернуться.",
+        "Press {move} to move and turn around."
+      ]
+    },
+    {
+      "key": "tutorial.kick_title",
+      "source": "УДАР НОГОЙ",
+      "values": [
+        "УДАР НОГОЙ",
+        "KICK"
+      ]
+    },
+    {
+      "key": "tutorial.kick",
+      "source": "Мяч рядом! Нажмите {kick}, чтобы ударить в сторону, куда смотрит игрок.",
+      "values": [
+        "Мяч рядом! Нажмите {kick}, чтобы ударить в сторону, куда смотрит игрок.",
+        "The ball is close! Press {kick} to kick in the direction you are facing."
+      ]
+    },
+    {
+      "key": "tutorial.high_title",
+      "source": "ВЫСОКИЙ МЯЧ",
+      "values": [
+        "ВЫСОКИЙ МЯЧ",
+        "HIGH BALL"
+      ]
+    },
+    {
+      "key": "tutorial.high",
+      "source": "Мяч летит высоко. Нажмите {jump}, чтобы добраться до него.",
+      "values": [
+        "Мяч летит высоко. Нажмите {jump}, чтобы добраться до него.",
+        "The ball is high. Press {jump} to reach it."
+      ]
+    },
+    {
+      "key": "tutorial.double_title",
+      "source": "ДВОЙНОЙ ПРЫЖОК",
+      "values": [
+        "ДВОЙНОЙ ПРЫЖОК",
+        "DOUBLE JUMP"
+      ]
+    },
+    {
+      "key": "tutorial.double",
+      "source": "Пока игрок в воздухе, нажмите {jump} ещё раз, чтобы прыгнуть выше.",
+      "values": [
+        "Пока игрок в воздухе, нажмите {jump} ещё раз, чтобы прыгнуть выше.",
+        "While airborne, press {jump} again to jump higher."
+      ]
+    },
+    {
+      "key": "tutorial.header_title",
+      "source": "УДАР ГОЛОВОЙ",
+      "values": [
+        "УДАР ГОЛОВОЙ",
+        "HEADER"
+      ]
+    },
+    {
+      "key": "tutorial.header",
+      "source": "Мяч у головы! Нажмите {header}, чтобы направить его вперёд.",
+      "values": [
+        "Мяч у головы! Нажмите {header}, чтобы направить его вперёд.",
+        "The ball is at head height! Press {header} to send it forward."
+      ]
+    },
+    {
+      "key": "tutorial.bicycle_title",
+      "source": "УДАР ЧЕРЕЗ СЕБЯ",
+      "values": [
+        "УДАР ЧЕРЕЗ СЕБЯ",
+        "BICYCLE KICK"
+      ]
+    },
+    {
+      "key": "tutorial.bicycle",
+      "source": "В воздухе удерживайте {back} и нажмите {kick}, чтобы выполнить удар через себя.",
+      "values": [
+        "В воздухе удерживайте {back} и нажмите {kick}, чтобы выполнить удар через себя.",
+        "While airborne, hold {back} and press {kick} to perform a bicycle kick."
+      ]
+    },
+    {
+      "key": "tutorial.complete_title",
+      "source": "ОБУЧЕНИЕ ЗАВЕРШЕНО",
+      "values": [
+        "ОБУЧЕНИЕ ЗАВЕРШЕНО",
+        "TUTORIAL COMPLETE"
+      ]
+    },
+    {
+      "key": "tutorial.complete",
+      "source": "Теперь попробуйте забить гол! Нажмите {jump}, чтобы продолжить матч.",
+      "values": [
+        "Теперь попробуйте забить гол! Нажмите {jump}, чтобы продолжить матч.",
+        "Now try to score a goal! Press {jump} to continue the match."
+      ]
+    },
+    {
+      "key": "tutorial.skip",
+      "source": "\n\n<size=55%><color=#A9A9A9>Esc / Menu — пропустить обучение</color></size>",
+      "values": [
+        "\n\n<size=55%><color=#A9A9A9>Esc / Menu — пропустить обучение</color></size>",
+        "\n\n<size=55%><color=#A9A9A9>Esc / Menu — skip tutorial</color></size>"
+      ]
+    },
+    {
+      "key": "tutorial.placeholder",
+      "source": "Тест, нажмите A, чтобы продолжить",
+      "values": [
+        "Тест, нажмите A, чтобы продолжить",
+        "Press A to continue"
+      ]
+    },
+    {
+      "key": "controls.left_stick",
+      "source": "ЛЕВЫЙ СТИК",
+      "values": [
+        "ЛЕВЫЙ СТИК",
+        "LEFT STICK"
+      ]
+    },
+    {
+      "key": "controls.jump",
+      "source": "ПРЫЖОК",
+      "values": [
+        "ПРЫЖОК",
+        "JUMP"
+      ]
+    },
+    {
+      "key": "controls.stick_back",
+      "source": "СТИК НАЗАД",
+      "values": [
+        "СТИК НАЗАД",
+        "STICK BACK"
+      ]
+    },
+    {
+      "key": "parameter.ball_gravity",
+      "source": "Гравитация мяча",
+      "values": [
+        "Гравитация мяча",
+        "Ball gravity"
+      ]
+    },
+    {
+      "key": "parameter.player_gravity",
+      "source": "Гравитация персонажа",
+      "values": [
+        "Гравитация персонажа",
+        "Player gravity"
+      ]
+    },
+    {
+      "key": "parameter.ball_max_speed",
+      "source": "Макс. скорость мяча",
+      "values": [
+        "Макс. скорость мяча",
+        "Max ball speed"
+      ]
+    },
+    {
+      "key": "parameter.ball_bounce",
+      "source": "Отскок мяча",
+      "values": [
+        "Отскок мяча",
+        "Ball bounce"
+      ]
+    },
+    {
+      "key": "parameter.ball_scale",
+      "source": "Размер мяча",
+      "values": [
+        "Размер мяча",
+        "Ball size"
+      ]
+    },
+    {
+      "key": "parameter.player_scale",
+      "source": "Размер персонажа",
+      "values": [
+        "Размер персонажа",
+        "Player size"
+      ]
+    },
+    {
+      "key": "parameter.jump",
+      "source": "Сила прыжка",
+      "values": [
+        "Сила прыжка",
+        "Jump strength"
+      ]
+    },
+    {
+      "key": "parameter.kick",
+      "source": "Сила удара мяча",
+      "values": [
+        "Сила удара мяча",
+        "Kick strength"
+      ]
+    },
+    {
+      "key": "parameter.speed",
+      "source": "Скорость игрока",
+      "values": [
+        "Скорость игрока",
+        "Player speed"
+      ]
+    },
+    {
+      "key": "settings.sound",
+      "source": "Звук",
+      "values": [
+        "Звук",
+        "Sound"
+      ]
+    },
+    {
+      "key": "settings.nickname",
+      "source": "Никнейм",
+      "values": [
+        "Никнейм",
+        "Nickname"
+      ]
+    },
+    {
+      "key": "settings.language",
+      "source": "Язык",
+      "values": [
+        "Язык",
+        "Language"
+      ]
+    },
+    {
+      "key": "settings.nickname_placeholder",
+      "source": "Enter text...",
+      "values": [
+        "Введите ник...",
+        "Enter text..."
+      ]
+    }
+  ]
+}

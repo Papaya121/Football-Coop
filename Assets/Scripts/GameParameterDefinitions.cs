@@ -27,16 +27,16 @@ public static class GameParameterDefinitions
     public const string BallMaxSpeedKey = "ball_max_speed";
     public const string BallMaxLobAngleKey = "ball_max_lob_angle";
 
-    public const float DefaultBallGravity = 11.5f;
+    public const float DefaultBallGravity = 7.7f;
     public const float DefaultBallBounce = 0.8f;
     public const float DefaultBallScale = 0.7f;
     public const float DefaultPlayerGravity = 14.3f;
     public const float DefaultPlayerJump = 7f;
     public const float DefaultPlayerScale = 0.8f;
     public const float DefaultPlayerAirAcceleration = 12f;
-    public const float DefaultPlayerSpeed = 8f;
-    public const float DefaultBallKickForce = 27f;
-    public const float DefaultBallMaxSpeed = 27f;
+    public const float DefaultPlayerSpeed = 4.5f;
+    public const float DefaultBallKickForce = 11f;
+    public const float DefaultBallMaxSpeed = 11f;
     public const float DefaultBallMaxLobAngle = 70f;
     public const float LegacyMinimumBallKickForce = 15f;
 

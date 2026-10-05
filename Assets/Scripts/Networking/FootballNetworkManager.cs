@@ -50,6 +50,9 @@ public sealed class FootballNetworkManager : NetworkManager
 
     public static FootballNetworkManager Instance => singleton as FootballNetworkManager;
 
+    public string ClientStatusSource { get; private set; }
+    public object[] ClientStatusArguments { get; private set; }
+
     public event Action<string> MatchmakingStatusChanged;
     public event Action MatchLoading;
     public event Action ReturnedToMenu;
@@ -285,7 +288,7 @@ public sealed class FootballNetworkManager : NetworkManager
         if (_searchRequested && _clientMatchId == 0)
             BeginAiFallback("Сервер недоступен. Запуск матча с ботом…");
         else
-            SetClientStatus($"Ошибка сети: {reason}");
+            SetClientStatus("Ошибка сети: {0}", reason);
     }
 
     public override void OnServerConnect(NetworkConnectionToClient connection)
@@ -624,7 +627,7 @@ public sealed class FootballNetworkManager : NetworkManager
         if (!_searchRequested || _clientMatchId != 0)
             return;
 
-        SetClientStatus($"В поиске: {message.WaitingPlayerCount} игрок(а)");
+        SetClientStatus("В поиске: {0} игрок(а)", message.WaitingPlayerCount);
 
         if (message.WaitingPlayerCount <= 1)
             StartSoloQueueTimeout();
@@ -664,9 +667,11 @@ public sealed class FootballNetworkManager : NetworkManager
         BeginClientReturnToMenu("Матч завершён");
     }
 
-    private void SetClientStatus(string status)
+    private void SetClientStatus(string status, params object[] arguments)
     {
-        MatchmakingStatusChanged?.Invoke(status);
+        ClientStatusSource = status;
+        ClientStatusArguments = arguments;
+        MatchmakingStatusChanged?.Invoke(FootballLocalization.Format(status, arguments));
     }
 
     private IEnumerator WaitForConnectionTimeout()

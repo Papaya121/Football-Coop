@@ -20,13 +20,13 @@ public sealed class PlayerPrefsPlayerProfileRepository : IPlayerProfileRepositor
         }
 
         string nickname = PlayerPrefs.GetString(NicknameKey);
-        if (string.IsNullOrWhiteSpace(nickname))
+        if (!PlayerNickname.TryNormalize(nickname, out string normalized))
         {
             profile = null;
             return false;
         }
 
-        profile = new PlayerProfile(nickname, PlayerPrefs.GetInt(RatingKey, PlayerProfileService.InitialRating));
+        profile = new PlayerProfile(normalized, PlayerPrefs.GetInt(RatingKey, PlayerProfileService.InitialRating));
         return true;
     }
 

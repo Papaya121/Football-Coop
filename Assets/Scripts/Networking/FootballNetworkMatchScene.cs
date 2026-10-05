@@ -10,6 +10,8 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
 {
     private const int PlayerCount = 2;
 
+    [SerializeField] private GameObject _mobileInput;
+
     [SerializeField] private FootballPlayerController[] _localPlayers = new FootballPlayerController[PlayerCount];
     [SerializeField] private FootballBall _localBall;
     [SerializeField] private FootballPlayerJoinManager _localJoinManager;
@@ -39,6 +41,9 @@ public sealed class FootballNetworkMatchScene : MonoBehaviour
 
     private void Awake()
     {
+        if (_mobileInput != null)
+            _mobileInput.SetActive(FootballInputPlatform.IsMobile);
+
         CaptureSpawnPoints();
         BindLocalPlayerBillboards();
         DisableLegacyPhysicsSimulator();

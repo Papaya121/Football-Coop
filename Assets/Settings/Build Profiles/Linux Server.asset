@@ -51,7 +51,7 @@ MonoBehaviour:
         m_Architecture: 0
         m_RemoteDeviceSectionFoldoutOpen: 1
         m_DeployTarget: 1
-        m_RemoteDeviceAddress: 31.76.73.22
+        m_RemoteDeviceAddress: 212.57.127.98
         m_RemoteDeviceUsername: root
         m_RemoteDeviceExports: 
         m_PathOnRemoteDevice: /root/football-coop

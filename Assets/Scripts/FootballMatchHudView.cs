@@ -73,7 +73,7 @@ public sealed class FootballMatchHudView : MonoBehaviour
 
         if (_currentStatusText != value)
         {
-            _statusText.text = value;
+            FootballLocalization.SetText(_statusText, value);
             _currentStatusText = value;
         }
 
