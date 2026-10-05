@@ -266,7 +266,10 @@ public sealed class FootballPlayerController : MonoBehaviour
         if (wasEnabled)
             _input.Player.Disable();
 
-        _input.devices = _controlDevice != null ? new[] { _controlDevice } : null;
+        // A null array converts to an empty ReadOnlyArray filter. Assign nullable null directly.
+        _input.devices = null;
+        if (_controlDevice != null)
+            _input.devices = new[] { _controlDevice };
 
         _input.bindingMask = FootballInputBindingMasks.FromControlSource(_controlSource);
 

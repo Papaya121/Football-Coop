@@ -130,7 +130,9 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
         if (wasEnabled)
             _input.Ball.Disable();
 
-        _input.devices = device != null ? new[] { device } : null;
+        _input.devices = null;
+        if (device != null)
+            _input.devices = new[] { device };
         _input.bindingMask = FootballInputBindingMasks.FromControlSource(source);
 
         if (wasEnabled)
