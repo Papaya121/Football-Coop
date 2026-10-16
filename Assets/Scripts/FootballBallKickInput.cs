@@ -87,6 +87,7 @@ public sealed class FootballBallKickInput : MonoBehaviour
 
         float normalizedCharge = 0f;
         float powerMultiplier = 1f;
+        float animationCharge = 0f;
 
         if (_shotCharge != null)
         {
@@ -96,6 +97,7 @@ public sealed class FootballBallKickInput : MonoBehaviour
             powerMultiplier = _kicker.ChargeControlsHeight
                 ? _shotCharge.EvaluatePowerMultiplier(0f)
                 : _shotCharge.EvaluatePowerMultiplier(normalizedCharge);
+            animationCharge = normalizedCharge;
             normalizedCharge = _shotCharge.EvaluateNormalizedCharge(normalizedCharge);
         }
 
@@ -109,7 +111,7 @@ public sealed class FootballBallKickInput : MonoBehaviour
             return;
         }
 
-        _kicker.TryKick(normalizedCharge, isLob);
+        _kicker.TryKick(normalizedCharge, isLob, animationCharge);
     }
 
     private void OnInputAssigned(FootballPlayerControlSource source, InputDevice device)

@@ -21,6 +21,8 @@ public sealed class FootballBallHeader : MonoBehaviour
     public event Action HeaderAttempted;
     public event Action Headed;
 
+    public float LastAnimationCharge { get; private set; }
+
     public Vector3 ZoneOrigin => GetOrigin();
     public float ZoneRange => _headerProfile != null ? _headerProfile.Range : 0f;
     public float ZoneAngle => _headerProfile != null ? _headerProfile.MaxHeaderAngle : 0f;
@@ -38,9 +40,10 @@ public sealed class FootballBallHeader : MonoBehaviour
         EnsureProfile();
     }
 
-    public bool TryHeader(float powerMultiplier = 1f)
+    public bool TryHeader(float powerMultiplier = 1f, float normalizedCharge = 0f)
     {
         EnsureProfile();
+        LastAnimationCharge = Mathf.Clamp01(normalizedCharge);
         HeaderAttempted?.Invoke();
 
         if (Time.time < _nextHeaderTime)

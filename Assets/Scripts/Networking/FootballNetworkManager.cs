@@ -20,7 +20,7 @@ public sealed class FootballNetworkManager : NetworkManager
     [Scene, SerializeField] private string _gameplayScene = "Assets/Scenes/Gameplay.unity";
     [SerializeField] private GameObject _networkBallPrefab;
     [SerializeField, Min(1)] private int _maxConcurrentMatches = 32;
-    [SerializeField, Min(1f)] private float _matchDurationSeconds = 180f;
+    [SerializeField, Min(1f)] private float _matchDurationSeconds = 60f;
     [SerializeField, Min(1)] private int _countdownSeconds = 3;
     [SerializeField, Min(0f)] private float _resultPresentationSeconds = 10f;
     [SerializeField, Min(1f)] private float _connectionTimeoutSeconds = 8f;

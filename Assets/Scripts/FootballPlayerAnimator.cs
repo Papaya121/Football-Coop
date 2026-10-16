@@ -12,6 +12,10 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
 {
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
     private static readonly int IsJumpingHash = Animator.StringToHash("IsJumping");
+    private static readonly int KickAirHash = Animator.StringToHash("KickAir");
+    private static readonly int KickMaxHash = Animator.StringToHash("KickMax");
+    private static readonly int HeaderAirMaxHash = Animator.StringToHash("HeaderAirMax");
+    private static readonly int HeaderAirHash = Animator.StringToHash("HeaderAir");
     private static readonly int KickHash = Animator.StringToHash("Kick");
     private static readonly int BicycleKickHash = Animator.StringToHash("BicycleKick");
     private static readonly int HeaderHash = Animator.StringToHash("Header");
@@ -34,6 +38,10 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
     private RuntimeAnimatorController _cachedAnimatorController;
     private bool _hasIsRunningParameter;
     private bool _hasIsJumpingParameter;
+    private bool _hasKickAirParameter;
+    private bool _hasKickMaxParameter;
+    private bool _hasHeaderAirMaxParameter;
+    private bool _hasHeaderAirParameter;
     private bool _hasKickParameter;
     private bool _hasBicycleKickParameter;
     private bool _hasHeaderParameter;
@@ -130,9 +138,12 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
             _animator.SetBool(IsJumpingHash, _controller.IsJumping);
     }
 
-    public void TriggerKickAnimation()
+    public void TriggerKickAnimation(float normalizedCharge = 0f, bool? isJumping = null)
     {
-        TriggerActionAnimation(KickHash);
+        ResolveReferences();
+        int trigger = (isJumping ?? (_controller != null && _controller.IsJumping))
+            ? KickAirHash : normalizedCharge > 0.6f ? KickMaxHash : KickHash;
+        TriggerActionAnimation(trigger);
     }
 
     public void TriggerBicycleKickAnimation()
@@ -140,9 +151,11 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
         TriggerActionAnimation(BicycleKickHash);
     }
 
-    public void TriggerHeaderAnimation()
+    public void TriggerHeaderAnimation(float normalizedCharge = 0f, bool? isJumping = null)
     {
-        TriggerActionAnimation(HeaderHash);
+        ResolveReferences();
+        TriggerActionAnimation((isJumping ?? (_controller != null && _controller.IsJumping))
+            ? (normalizedCharge > 0.6f ? HeaderAirMaxHash : HeaderAirHash) : HeaderHash);
     }
 
     public void TriggerDoubleJumpAnimation()
@@ -374,6 +387,10 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
         _cachedAnimatorController = _animator.runtimeAnimatorController;
         _hasIsRunningParameter = false;
         _hasIsJumpingParameter = false;
+        _hasKickAirParameter = false;
+        _hasKickMaxParameter = false;
+        _hasHeaderAirMaxParameter = false;
+        _hasHeaderAirParameter = false;
         _hasKickParameter = false;
         _hasBicycleKickParameter = false;
         _hasHeaderParameter = false;
@@ -386,6 +403,14 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
                 _hasIsRunningParameter = true;
             else if (parameter.type == AnimatorControllerParameterType.Bool && parameter.nameHash == IsJumpingHash)
                 _hasIsJumpingParameter = true;
+            else if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.nameHash == KickAirHash)
+                _hasKickAirParameter = true;
+            else if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.nameHash == KickMaxHash)
+                _hasKickMaxParameter = true;
+            else if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.nameHash == HeaderAirMaxHash)
+                _hasHeaderAirMaxParameter = true;
+            else if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.nameHash == HeaderAirHash)
+                _hasHeaderAirParameter = true;
             else if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.nameHash == KickHash)
                 _hasKickParameter = true;
             else if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.nameHash == BicycleKickHash)
@@ -409,7 +434,7 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
         if (_kickAnimationTriggerMode != FootballBallActionAnimationTriggerMode.OnlyOnSuccessfulAction)
             return;
 
-        TriggerActionAnimation(KickHash);
+        TriggerKickAnimation(_kicker != null ? _kicker.LastAnimationCharge : 0f);
     }
 
     private void OnKickAttempted()
@@ -417,7 +442,7 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
         if (_kickAnimationTriggerMode != FootballBallActionAnimationTriggerMode.AlwaysOnInput)
             return;
 
-        TriggerActionAnimation(KickHash);
+        TriggerKickAnimation(_kicker != null ? _kicker.LastAnimationCharge : 0f);
     }
 
     private void OnBicycleKicked()
@@ -441,7 +466,7 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
         if (_headerAnimationTriggerMode != FootballBallActionAnimationTriggerMode.OnlyOnSuccessfulAction)
             return;
 
-        TriggerActionAnimation(HeaderHash);
+        TriggerHeaderAnimation(_header != null ? _header.LastAnimationCharge : 0f);
     }
 
     private void OnHeaderAttempted()
@@ -449,7 +474,7 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
         if (_headerAnimationTriggerMode != FootballBallActionAnimationTriggerMode.AlwaysOnInput)
             return;
 
-        TriggerActionAnimation(HeaderHash);
+        TriggerHeaderAnimation(_header != null ? _header.LastAnimationCharge : 0f);
     }
 
     private void TriggerActionAnimation(int parameterHash)
@@ -467,6 +492,18 @@ public sealed class FootballPlayerAnimator : MonoBehaviour
 
     private bool HasTriggerParameter(int parameterHash)
     {
+        if (parameterHash == KickAirHash)
+            return _hasKickAirParameter;
+
+        if (parameterHash == KickMaxHash)
+            return _hasKickMaxParameter;
+
+        if (parameterHash == HeaderAirMaxHash)
+            return _hasHeaderAirMaxParameter;
+
+        if (parameterHash == HeaderAirHash)
+            return _hasHeaderAirParameter;
+
         if (parameterHash == KickHash)
             return _hasKickParameter;
 

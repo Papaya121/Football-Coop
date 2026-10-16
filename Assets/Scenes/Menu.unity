@@ -4869,7 +4869,7 @@ MonoBehaviour:
   unreliableBaselineRate: 1
   unreliableRedundancy: 0
   transport: {fileID: 854216211}
-  networkAddress: 212.57.127.98
+  networkAddress: localhost
   maxConnections: 100
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
@@ -4900,7 +4900,7 @@ MonoBehaviour:
   _gameplayScene: Assets/Scenes/Gameplay.unity
   _networkBallPrefab: {fileID: 9081017334737160680, guid: 2f2edf3a490e34b17ab8ec3120593800, type: 3}
   _maxConcurrentMatches: 32
-  _matchDurationSeconds: 180
+  _matchDurationSeconds: 60
   _countdownSeconds: 3
   _resultPresentationSeconds: 10
   _connectionTimeoutSeconds: 8

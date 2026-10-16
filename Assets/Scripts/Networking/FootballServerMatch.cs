@@ -186,7 +186,9 @@ public sealed class FootballServerMatch : IDisposable
 
         if (previousState != FootballMatchState.Running && _clock.State == FootballMatchState.Running)
         {
-            ResetEntities();
+            ResetEntities(previousState == FootballMatchState.GoalPause
+                ? _lastScoringSide.Opposite()
+                : (FootballTeamSide?)null);
             SetPlayerGameplayEnabled(true);
             RaiseEvent(FootballMatchEvent.Whistle);
         }
@@ -254,7 +256,7 @@ public sealed class FootballServerMatch : IDisposable
         SendSnapshot();
     }
 
-    private void ResetEntities()
+    private void ResetEntities(FootballTeamSide? receivingSide = null)
     {
         for (int i = 0; i < _players.Length; i++)
         {
@@ -269,6 +271,8 @@ public sealed class FootballServerMatch : IDisposable
         {
             FootballNetworkMatchScene.SpawnPoint ballSpawn = SceneContext.GetBallSpawnPoint();
             _ball.Respawn(ballSpawn.Position, ballSpawn.Rotation);
+            if (receivingSide.HasValue)
+                _ball.Serve(receivingSide.Value);
         }
     }
 

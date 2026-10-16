@@ -271,12 +271,12 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
         if (!isLob && _bicycleKicker != null && _bicycleKicker.CanAttemptBicycleKick())
         {
             if (_bicycleKicker.TryBicycleKick(powerMultiplier))
-                RpcPlayAction(FootballNetworkAction.BicycleKick);
+                RpcPlayAction(FootballNetworkAction.BicycleKick, 0f, true);
             return;
         }
 
-        if (_kicker != null && _kicker.TryKick(GetNormalizedCharge(normalizedCharge), isLob))
-            RpcPlayAction(FootballNetworkAction.Kick);
+        if (_kicker != null && _kicker.TryKick(GetNormalizedCharge(normalizedCharge), isLob, normalizedCharge))
+            RpcPlayAction(FootballNetworkAction.Kick, normalizedCharge, _controller != null && _controller.IsJumping);
     }
 
     [Command]
@@ -285,25 +285,25 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
         if (!_serverGameplayEnabled)
             return;
 
-        if (_header != null && _header.TryHeader(GetPowerMultiplier(normalizedCharge)))
-            RpcPlayAction(FootballNetworkAction.Header);
+        if (_header != null && _header.TryHeader(GetPowerMultiplier(normalizedCharge), normalizedCharge))
+            RpcPlayAction(FootballNetworkAction.Header, normalizedCharge, _controller != null && _controller.IsJumping);
     }
 
     [ClientRpc]
-    private void RpcPlayAction(FootballNetworkAction action)
+    private void RpcPlayAction(FootballNetworkAction action, float normalizedCharge, bool isJumping)
     {
         ResolveReferences();
 
         switch (action)
         {
             case FootballNetworkAction.Kick:
-                _animator?.TriggerKickAnimation();
+                _animator?.TriggerKickAnimation(normalizedCharge, isJumping);
                 break;
             case FootballNetworkAction.BicycleKick:
                 _animator?.TriggerBicycleKickAnimation();
                 break;
             case FootballNetworkAction.Header:
-                _animator?.TriggerHeaderAnimation();
+                _animator?.TriggerHeaderAnimation(normalizedCharge, isJumping);
                 break;
             case FootballNetworkAction.DoubleJump:
                 _animator?.TriggerDoubleJumpAnimation();
@@ -447,7 +447,7 @@ public sealed class FootballNetworkPlayer : NetworkBehaviour
     [Server]
     private void OnServerDoubleJumped()
     {
-        RpcPlayAction(FootballNetworkAction.DoubleJump);
+        RpcPlayAction(FootballNetworkAction.DoubleJump, 0f, true);
     }
 
     private void OnTeamSideChanged(FootballTeamSide _, FootballTeamSide newSide)

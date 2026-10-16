@@ -146,6 +146,10 @@ MonoBehaviour:
   _bicycleKicker: {fileID: 6932915085668317244}
   _header: {fileID: 4251739061579830641}
   _animator: {fileID: 4980367070468202995}
+  _rotateStatePath: Base Layer.Rotate
+  _rotateLayer: 0
+  _rotateEntryTimeout: 1
+  _rotatePoseBlendDuration: 0.25
   _kickAnimationTriggerMode: 1
   _bicycleKickAnimationTriggerMode: 1
   _headerAnimationTriggerMode: 1
@@ -467,9 +471,11 @@ MonoBehaviour:
   _localHeaderInput: {fileID: 7593518603217549263}
   _shotCharge: {fileID: 2847349902718162341}
   _teamRenderers:
+  - {fileID: 7587122448952408925}
+  - {fileID: 3032192711099879872}
   - {fileID: 8374641414649555635}
-  _leftTeamMaterial: {fileID: 2100000, guid: 2b652b9e57a704a3abf2d769e90d1ab6, type: 2}
-  _rightTeamMaterial: {fileID: 2100000, guid: 37d6142be629f496f86de573fca4ca68, type: 2}
+  _leftTeamMaterial: {fileID: 2100000, guid: c068a11e2b22b41b1bf0f0f1db5c4cbd, type: 2}
+  _rightTeamMaterial: {fileID: 2100000, guid: 72086f5556eab44478d7778433921683, type: 2}
 --- !u!1 &4694234505762617620
 GameObject:
   m_ObjectHideFlags: 0
@@ -1115,6 +1121,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e045b1579af4c4f0e8bb1ed35cb04261, type: 3}
+--- !u!137 &3032192711099879872 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5822821947120931875, guid: e045b1579af4c4f0e8bb1ed35cb04261, type: 3}
+  m_PrefabInstance: {fileID: 8852478732894389731}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &7587122448952408925 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7813590141776298306, guid: e045b1579af4c4f0e8bb1ed35cb04261, type: 3}
+  m_PrefabInstance: {fileID: 8852478732894389731}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &9029976721270743560 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e045b1579af4c4f0e8bb1ed35cb04261, type: 3}

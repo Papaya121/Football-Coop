@@ -26,6 +26,7 @@ public sealed class FootballBallKicker : MonoBehaviour
     public Vector3 ZoneOrigin => GetOrigin();
     public float ZoneRange => _kickProfile != null ? _kickProfile.Range : 0f;
     public float ZoneAngle => _kickProfile != null ? _kickProfile.MaxKickAngle : 0f;
+    public float LastAnimationCharge { get; private set; }
     public bool ChargeControlsHeight => _kickProfile != null && _kickProfile.ChargeControlsHeight;
     public int FacingDirection => _controller != null ? _controller.FacingDirection : 1;
 
@@ -41,9 +42,10 @@ public sealed class FootballBallKicker : MonoBehaviour
         EnsureProfile();
     }
 
-    public bool TryKick(float normalizedCharge = 0f, bool isLob = false)
+    public bool TryKick(float normalizedCharge = 0f, bool isLob = false, float? animationCharge = null)
     {
         EnsureProfile();
+        LastAnimationCharge = Mathf.Clamp01(animationCharge ?? normalizedCharge);
         KickAttempted?.Invoke();
 
         if (Time.time < _nextKickTime)

@@ -15,6 +15,7 @@ public sealed class FootballBall : MonoBehaviour
 
     [SerializeField, Min(0f)] private float _maxLinearSpeed = 24f;
     [SerializeField, Min(0f)] private float _maxAngularSpeed = 45f;
+    [SerializeField, Min(0f)] private float _serveSpeed = 6f;
     [SerializeField] private bool _lockToGameplayPlane = true;
     [FormerlySerializedAs("_strongKickSoundSpeed")]
     [SerializeField, Min(0f)] private float _strongKickSpeed = 18f;
@@ -169,6 +170,12 @@ public sealed class FootballBall : MonoBehaviour
         _rigidbody.rotation = rotation;
         transform.SetPositionAndRotation(ToGameplayPlane(position), rotation);
         StopStrongKickVfx();
+    }
+
+    public void Serve(FootballTeamSide receivingSide)
+    {
+        float direction = receivingSide == FootballTeamSide.Left ? -1f : 1f;
+        ApplyDirectedHit(Vector3.right * (direction * _serveSpeed), Vector3.zero, 0f);
     }
 
     public Vector3 GetClosestInteractionPoint(Vector3 origin)

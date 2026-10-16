@@ -84,16 +84,17 @@ public sealed class FootballBallHeaderInput : MonoBehaviour
             return;
 
         float powerMultiplier = 1f;
+        float normalizedCharge = 0f;
 
         if (_shotCharge != null)
         {
-            if (!_shotCharge.TryReleaseCharge(FootballShotChargeAction.Header, out float normalizedCharge))
+            if (!_shotCharge.TryReleaseCharge(FootballShotChargeAction.Header, out normalizedCharge))
                 return;
 
             powerMultiplier = _shotCharge.EvaluatePowerMultiplier(normalizedCharge);
         }
 
-        _header.TryHeader(powerMultiplier);
+        _header.TryHeader(powerMultiplier, normalizedCharge);
     }
 
     private void OnInputAssigned(FootballPlayerControlSource source, InputDevice device)

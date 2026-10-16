@@ -314,8 +314,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FootballBall
   _maxLinearSpeed: 24
   _maxAngularSpeed: 45
+  _serveSpeed: 6
   _lockToGameplayPlane: 1
   _strongKickSpeed: 18
+  _stuckKickCollisionWindow: 0.12
+  _stuckKickUpwardSpeed: 12
+  _stuckKickHorizontalSpeedMultiplier: 0.25
   _strongKickVfx: {fileID: 0}
   _strongKickVfxDuration: 0.8
   _strongKickTrails:

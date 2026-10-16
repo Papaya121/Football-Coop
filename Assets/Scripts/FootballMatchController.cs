@@ -8,7 +8,7 @@ public sealed class FootballMatchController : MonoBehaviour
     [SerializeField] private FootballScoreController _scoreController;
     [SerializeField] private FootballMatchResetter _matchResetter;
     [SerializeField] private FootballMatchHudView _hudView;
-    [SerializeField, Min(1f)] private float _matchDurationSeconds = 180f;
+    [SerializeField, Min(1f)] private float _matchDurationSeconds = 60f;
     [SerializeField, Min(1)] private int _countdownSeconds = 3;
     [SerializeField, Min(0f)] private float _goalPauseSeconds = 2f;
 
@@ -63,7 +63,9 @@ public sealed class FootballMatchController : MonoBehaviour
 
         if (ShouldResetPositionsOnRunningEnter(previousState, _clock.State))
         {
-            _matchResetter?.ResetToStartPositions();
+            _matchResetter?.ResetToStartPositions(previousState == FootballMatchState.GoalPause
+                ? _lastScoringSide.Opposite()
+                : (FootballTeamSide?)null);
             FootballSoundPlayer.TryPlay(FootballSoundIds.Whistle, transform.position);
         }
 
@@ -121,7 +123,7 @@ public sealed class FootballMatchController : MonoBehaviour
         _clock.StartGoalPause(_goalPauseSeconds);
 
         if (_clock.State == FootballMatchState.Running)
-            _matchResetter?.ResetToStartPositions();
+            _matchResetter?.ResetToStartPositions(scoringSide.Opposite());
 
         RefreshHud();
     }

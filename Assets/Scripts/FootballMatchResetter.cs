@@ -25,10 +25,10 @@ public sealed class FootballMatchResetter : MonoBehaviour
             Array.Resize(ref _players, PlayerCapacity);
     }
 
-    public void ResetToStartPositions()
+    public void ResetToStartPositions(FootballTeamSide? receivingSide = null)
     {
         ResetPlayers();
-        ResetBall();
+        ResetBall(receivingSide);
     }
 
     private void CaptureStartPositions()
@@ -64,12 +64,14 @@ public sealed class FootballMatchResetter : MonoBehaviour
         }
     }
 
-    private void ResetBall()
+    private void ResetBall(FootballTeamSide? receivingSide)
     {
         if (_ball == null || !_hasBallStartSnapshot)
             return;
 
         _ball.Respawn(_ballStartSnapshot.Position, _ballStartSnapshot.Rotation);
+        if (receivingSide.HasValue)
+            _ball.Serve(receivingSide.Value);
 
         if (!_clearBallTrails)
             return;
